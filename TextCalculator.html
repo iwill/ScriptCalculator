@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>TextCalculator</title>
+<style>
+    #text {
+        text-align: right;
+        resize: horizontal;
+        float: left;
+        display: inline-block;
+        width: calc(100% - 280px);;
+        height: 220px;
+        margin: 0;
+    }
+    #res {
+        float: left;
+        display: inline-block;
+        width: 240px;
+        height: 220px;
+        margin: 0 0 0 5px;
+    }
+    .common {
+        font-family: monospace;
+        font-size: 13px;
+        line-height: 15px;
+        border-style: solid;
+        border-width: 1px;
+        border-color: gray;
+        padding: 5px;
+    }
+</style>
+</head>
+<body>
+    <textarea id="text" class="common" onkeyup="textChange(event, this.id)"></textarea>
+    <pre id="res" class="common"></pre>
+</body>
+<script type="text/javascript">
+    function textChange(event, id) {
+        var value = document.getElementById(id).value;
+        localStorage.setItem("value", value);
+        
+        var text = document.getElementById(id).value
+        .replace(/=/g, "==")
+        .replace(/==\s*\/\//g, "//")
+        .replace(/==\s*\n/g, "\n")
+        .replace(/==\s*$/, "");
+        var source = text.split("\n");
+        
+        var res = [];
+        for (line of source) {
+            try {
+                r = eval(line);
+            }
+            catch(e) {
+                r = "ERROR"
+            }
+            res.push(r);
+        }
+        document.getElementById("res").innerText = res.join("\n");
+    }
+    
+    document.getElementById("text").value = localStorage.getItem("value");
+    textChange(null, "text");
+</script>
+</html>
