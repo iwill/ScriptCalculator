@@ -41,9 +41,9 @@
         
         var text = document.getElementById(id).value
         .replace(/=/g, "==")
-        .replace(/==\s*\/\//g, "//")
-        .replace(/==\s*\n/g, "\n")
-        .replace(/==\s*$/, "");
+        .replace(/==\ *\/\//g, "//")
+        .replace(/==\ *\n/g, "\n")
+        .replace(/==\ *$/, "");
         var source = text.split("\n");
         
         var res = [];
