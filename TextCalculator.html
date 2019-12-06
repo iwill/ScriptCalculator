@@ -5,10 +5,10 @@
 <style>
     #text {
         text-align: right;
-        resize: horizontal;
+        resize: none; /* horizontal */
         float: left;
         display: inline-block;
-        width: calc(100% - 280px);;
+        width: calc(100% - 275px); /* 280 if `resize: horizontal;` */
         height: 220px;
         margin: 0;
     }
@@ -32,6 +32,7 @@
 </head>
 <body>
     <textarea id="text" class="common" onkeyup="textChange(event, this.id)"></textarea>
+    <!-- TODO: show res numbers -->
     <pre id="res" class="common"></pre>
 </body>
 <script type="text/javascript">
@@ -47,14 +48,24 @@
         var source = text.split("\n");
         
         var res = [];
+        var last = null;
         for (line of source) {
+            var r;
             try {
+                line = line.replace(/\$\d*/g, function(p) {
+                    if (p == "$") return last;
+                    var i = Number(p.slice(1));
+                    return i < res.length ? res[i] : p;
+                });
                 r = eval(line);
             }
             catch(e) {
                 r = "ERROR"
             }
             res.push(r);
+            if (r || r === 0) {
+                last = r;
+            }
         }
         document.getElementById("res").innerText = res.join("\n");
     }
