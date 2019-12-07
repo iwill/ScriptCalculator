@@ -3,23 +3,37 @@
 <head>
 <title>TextCalculator</title>
 <style>
-    #text {
-        text-align: right;
-        resize: none; /* horizontal */
+    * {
+        box-sizing: border-box;
+    }
+    
+    #left,
+    #right {
+        line-height: 0;
+    }
+    #left {
         float: left;
         display: inline-block;
-        width: calc(100% - 275px); /* 280 if `resize: horizontal;` */
-        height: 220px;
+        width: calc(100% - 245px);
         margin: 0;
     }
-    #res {
+    #right {
         float: left;
         display: inline-block;
         width: 240px;
-        height: 220px;
         margin: 0 0 0 5px;
     }
-    .common {
+    
+    #text {
+        text-align: right;
+        resize: none; /* horizontal */
+    }
+    #res {
+    }
+    .text {
+        width: 100%;
+        height: 320px;
+        margin: 0;
         font-family: monospace;
         font-size: 13px;
         line-height: 15px;
@@ -28,12 +42,39 @@
         border-color: gray;
         padding: 5px;
     }
+    
+    #left button,
+    #right button {
+        border-style: none;
+        font-size: 13px;
+        cursor: pointer;
+        width: 25px;
+        height: 25px;
+        margin: 5px 0 0 0;
+    }
+    #left button {
+        float: right;
+    }
+    #right button {
+        float: left;
+    }
 </style>
 </head>
 <body>
-    <textarea id="text" class="common" onkeyup="textChange(event, this.id)"></textarea>
-    <!-- TODO: show res numbers -->
-    <pre id="res" class="common"></pre>
+    <div id="left">
+        <textarea id="text" class="text" onkeyup="textChange(event, this.id)"></textarea>
+        <button>&lt;</button>
+    </div>
+    <div id="right">
+        <pre id="res" class="text"></pre>
+        <button>&gt;</button>
+    </div>
+    <!--
+        TODO:
+        - method of Number & Math, prevent others
+        - res < >
+        - <pre> to <textarea>, sync scroll
+    -->
 </body>
 <script type="text/javascript">
     function textChange(event, id) {
@@ -48,23 +89,34 @@
         var source = text.split("\n");
         
         var res = [];
-        var last = null;
+        var vars = {};
         for (line of source) {
             var r;
             try {
+                var v = line.match(/^\b[A-z_$]+[A-z0-9_$]*\:/);
+                if (v) {
+                    line = line.slice(v.index + v[0].length);
+                }
+                line = line.replace(/\b[A-z_$]+[A-z0-9_$]*/g, function(w) {
+                    return vars[w] || w;
+                });
                 line = line.replace(/\$\d*/g, function(p) {
-                    if (p == "$") return last;
+                    if (p == "$") return vars.$;
                     var i = Number(p.slice(1));
                     return i < res.length ? res[i] : p;
                 });
                 r = eval(line);
+                if (v) {
+                    var key = v[0].slice(0, -1);
+                    vars[key] = r;
+                }
             }
             catch(e) {
-                r = "ERROR"
+                r = "ERROR";
             }
             res.push(r);
             if (r || r === 0) {
-                last = r;
+                vars.$ = r;
             }
         }
         document.getElementById("res").innerText = res.join("\n");
