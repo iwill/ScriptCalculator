@@ -29,23 +29,28 @@
     
     #src {
         text-align: right;
-        resize: none; /* horizontal */
     }
     #res {
-        resize: none; /* horizontal */
     }
     #src,
     #res {
         width: 100%;
         height: 320px;
-        margin: 0;
+        resize: none; /* horizontal */
         font-family: monospace;
         font-size: 13px;
+        margin: 0;
+        padding: 5px;
         line-height: 15px;
         border-style: solid;
         border-width: 1px;
         border-color: gray;
-        padding: 5px;
+    }
+    
+    #src::-webkit-scrollbar,
+    #res::-webkit-scrollbar {
+        width: 0px;
+        background: transparent; /* make scrollbar transparent */
     }
     
     button {
@@ -57,17 +62,18 @@
 </head>
 <body>
     <div id="left">
-        <textarea id="src" onkeyup="textChange(event, this.id)"></textarea>
+        <textarea id="src" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
     <div id="right">
-        <textarea id="res" readonly></textarea>
+        <textarea readonly id="res" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
 </body>
 <script type="text/javascript">
-    function textChange(event, id) {
+    function calculate(event, id) {
         var value = document.getElementById(id).value;
         localStorage.setItem("value", value);
         
+        /// prepare
         var src = document.getElementById(id).value
         .replace(/=/g, "==")
         .replace(/==\ *\/\//g, "//")
@@ -83,7 +89,7 @@
                 /// validate
                 var commentIndex = line.indexOf("//");
                 var code = commentIndex >= 0 ? line.slice(0, commentIndex) : line;
-                if (code.search(/[\[\]\{\}]/g) >= 0) {
+                if (code.search(/[\[\]\{\},'";]/g) >= 0) {
                     throw "invalid symbol in `" + line + "`"
                 }
                 if (code.search(/\.\s*[A-z_$]+[A-z0-9_$]*\s*?\(/g) >= 0) {
@@ -96,18 +102,18 @@
                     }
                 });
                 
-                // get variable
+                /// get variable
                 var v = line.match(/^\b[A-z_$]+[A-z0-9_$]*\:/);
                 if (v) {
                     line = line.slice(v.index + v[0].length);
                 }
                 
-                // set variable
+                /// set variable
                 line = line.replace(/\b[A-z_$]+[A-z0-9_$]*/g, function(key) {
                     return vars[key] || key;
                 });
                 
-                // set $x
+                /// set $x
                 var nonNullRes = res.filter(function(r) {
                     return r || r === 0
                 });
@@ -117,12 +123,15 @@
                     return i >= 0 && i < nonNullRes.length ? nonNullRes[i] : $x;
                 });
                 
-                // eval
+                /// eval
                 with (Math) {
                     r = eval(line);
                 }
+                if (r && r != true && typeof r != "number") {
+                    throw "invalid expression in `" + line + "`" 
+                }
                 
-                // vars
+                /// vars
                 if (r || r === 0) {
                     vars.$ = r;
                 }
@@ -135,20 +144,25 @@
                 r = "ERROR";
             }
             
-            // res
+            /// res
             res.push(r);
         }
         
+        /// output
         // var fixed = res.map((name, index) => name ? Number(name).toFixed(2) : name);
         document.getElementById("res").value = res.join("\n");
     }
     
+    function syncScrolling (event, id) {
+        var targetID = (id == "res" ? "src" : "res");
+        document.getElementById(targetID).scrollTop = document.getElementById(id).scrollTop;
+    }
+    
     document.getElementById("src").value = localStorage.getItem("value");
-    textChange(null, "src");
+    calculate(null, "src");
     
     // TODO:
-    // - copy exp = res
-    // - sync scrolling
+    // `document.execCommand("copy");`
     
 </script>
 </html>
