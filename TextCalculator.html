@@ -61,6 +61,34 @@
 </style>
 </head>
 <body>
+    <div style="float: right; padding: 5px;">
+        Decimal Digits: <select id="decimalDigits" onchange="calculate(event, 'src')">
+            <option value="-1">--</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+        </select>
+        &nbsp;
+        Round Method: <select id="roundMethod" onchange="calculate(event, 'src')">
+            <option value="floor">floor</option>
+            <option value="round">round</option>
+            <option value="ceil">ceil</option>
+        </select>
+    </div>
     <div id="left">
         <textarea id="src" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
@@ -71,7 +99,10 @@
 <script type="text/javascript">
     function calculate(event, id) {
         var value = document.getElementById(id).value;
-        localStorage.setItem("value", value);
+        localStorage.setItem("data.value", value);
+        
+        localStorage.setItem("config.decimalDigits", document.getElementById("decimalDigits").selectedIndex);
+        localStorage.setItem("config.roundMethod", document.getElementById("roundMethod").selectedIndex);
         
         /// prepare
         var src = document.getElementById(id).value
@@ -89,16 +120,16 @@
                 /// validate
                 var commentIndex = line.indexOf("//");
                 var code = commentIndex >= 0 ? line.slice(0, commentIndex) : line;
-                if (code.search(/[\[\]\{\},'";]/g) >= 0) {
-                    throw "invalid symbol in `" + line + "`"
+                if (code.search(/[\[\]\{\}'";]/g) >= 0) {
+                    throw "invalid symbol in `" + line + "`";
                 }
                 if (code.search(/\.\s*[A-z_$]+[A-z0-9_$]*\s*?\(/g) >= 0) {
-                    throw "invalid dot in `" + line + "`"
+                    throw "invalid dot in `" + line + "`";
                 }
                 (code.match(/\w+\s*\(/g) || []).forEach(function(name, i) {
                     name = name.slice(0, -1).trim();
-                    if (!Math[name]) {
-                        throw "invalid function in `" + line + "`"
+                    if (!Math[name] || name == "prototype" || name == "toSource" || name == "valueOf") {
+                        throw "invalid function in `" + line + "`";
                     }
                 });
                 
@@ -115,7 +146,7 @@
                 
                 /// set $x
                 var nonNullRes = res.filter(function(r) {
-                    return r || r === 0
+                    return r || r === 0;
                 });
                 line = line.replace(/\$\d*/g, function($x) {
                     if ($x == "$" || $x == "$0") return vars.$;
@@ -127,13 +158,20 @@
                 with (Math) {
                     r = eval(line);
                 }
-                if (r && r != true && typeof r != "number") {
-                    throw "invalid expression in `" + line + "`" 
-                }
                 
                 /// vars
-                if (r || r === 0) {
+                var type = typeof r;
+                if (type == "number" || type == "boolean") {
+                    var decimalDigits = Number(document.getElementById("decimalDigits").value);
+                    if (decimalDigits >= 0) {
+                        var roundMethod = document.getElementById("roundMethod").value;
+                        var mi = Math.pow(10, decimalDigits);
+                        r = Math[roundMethod](r * mi) / mi;
+                    }
                     vars.$ = r;
+                }
+                else if (r) {
+                    throw "invalid expression in `" + line + "`";
                 }
                 if (v) {
                     var key = v[0].slice(0, -1);
@@ -158,11 +196,15 @@
         document.getElementById(targetID).scrollTop = document.getElementById(id).scrollTop;
     }
     
-    document.getElementById("src").value = localStorage.getItem("value");
+    document.getElementById("decimalDigits").selectedIndex = localStorage.getItem("config.decimalDigits");
+    document.getElementById("roundMethod").selectedIndex = localStorage.getItem("config.roundMethod");
+    document.getElementById("src").value = localStorage.getItem("data.value");
     calculate(null, "src");
     
     // TODO:
     // `document.execCommand("copy");`
+    // share with #hash, but not change the href
+    // line-number for variables
     
 </script>
 </html>
