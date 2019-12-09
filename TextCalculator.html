@@ -58,7 +58,7 @@
 </head>
 <body>
     <div style="float: right; padding: 5px 0;">
-        DecimalDigits: <select id="decimalDigits" onchange="calculate(event, 'src')">
+        DecimalDigits: <select id="decimalDigits" onchange="calculate(event, this.id)">
             <option value="-1">--</option>
             <option value="0">0</option>
             <option value="1">1</option>
@@ -78,40 +78,42 @@
             <option value="15">15</option>
             <option value="16">16</option>
         </select>
-        RoundingMethod: <select id="roundingMethod" onchange="calculate(event, 'src')">
-            <option value="floor">floor</option>
+        RoundingMethod: <select id="roundingMethod" onchange="calculate(event, this.id)">
             <option value="round">round</option>
+            <option value="floor">floor</option>
             <option value="ceil">ceil</option>
         </select>
-        <button>reset</button>
+        <button id="reset" onclick="resetSetting(event, this.id)">reset</button>
         |
-        <button>clear</button>
-        <button>copy</button>
-        <button>share</button>
-        <!--
-        TODO:
-        - `document.execCommand("copy");`
-        - share with #hash, but not change the href
-        - line-number for variables
-        -->
+        <button id="clear" onclick="clearSource(event, this.id)">clear</button>
+        <!-- TODO: history -->
+        |
+        <button id="copy">copy</button><!-- TODO: document.execCommand("copy"); -->
+        <button id="share">share</button><!-- TODO: share with #hash, but not change the href, !!!: alert for overwriting -->
     </div>
     <div id="left">
         <textarea id="src" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
     <div id="right">
+        <!-- TODO: line-number for variables -->
         <textarea readonly id="res" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
 </body>
 <script type="text/javascript">
+    var $src = document.getElementById("src");
+    var $res = document.getElementById("res");
+    var $decimalDigits = document.getElementById("decimalDigits");
+    var $roundingMethod = document.getElementById("roundingMethod");
+    
     function calculate(event, id) {
-        var value = document.getElementById(id).value;
-        localStorage.setItem("data.src", value);
+        localStorage.setItem("data.src", $src.value);
+        localStorage.setItem("setting.decimalDigits", $decimalDigits.selectedIndex);
+        localStorage.setItem("setting.roundingMethod", $roundingMethod.selectedIndex);
         
-        localStorage.setItem("config.decimalDigits", document.getElementById("decimalDigits").selectedIndex);
-        localStorage.setItem("config.roundingMethod", document.getElementById("roundingMethod").selectedIndex);
+        $roundingMethod.disabled = ($decimalDigits.selectedIndex == 0);
         
         /// prepare
-        var src = document.getElementById(id).value
+        var src = $src.value
         .replace(/=/g, "==")
         .replace(/==\ *\/\//g, "//")
         .replace(/==\ *\n/g, "\n")
@@ -168,9 +170,9 @@
                 /// vars
                 var type = typeof r;
                 if (type == "number") {
-                    var decimalDigits = Number(document.getElementById("decimalDigits").value);
+                    var decimalDigits = Number($decimalDigits.value);
                     if (decimalDigits >= 0) {
-                        var roundingMethod = document.getElementById("roundingMethod").value;
+                        var roundingMethod = $roundingMethod.value;
                         var mi = Math.pow(10, decimalDigits);
                         r = Math[roundingMethod](r * mi) / mi;
                     }
@@ -197,18 +199,30 @@
         
         /// output
         // var fixed = res.map((name, index) => name ? Number(name).toFixed(2) : name);
-        document.getElementById("res").value = res.join("\n");
+        $res.value = res.join("\n");
     }
     
-    function syncScrolling (event, id) {
+    function resetSetting(event, id) {
+        $decimalDigits.selectedIndex = 0;
+        $roundingMethod.selectedIndex = 0;
+        calculate(null, id);
+    }
+    
+    function clearSource(event, id) {
+        $src.select();
+        document.execCommand("insertText", false, "");
+        calculate(null, id);
+    }
+    
+    function syncScrolling(event, id) {
         var targetID = (id == "res" ? "src" : "res");
         document.getElementById(targetID).scrollTop = document.getElementById(id).scrollTop;
     }
     
-    document.getElementById("decimalDigits").selectedIndex = localStorage.getItem("config.decimalDigits");
-    document.getElementById("roundingMethod").selectedIndex = localStorage.getItem("config.roundingMethod");
-    document.getElementById("src").value = localStorage.getItem("data.src");
-    calculate(null, "src");
+    $decimalDigits.selectedIndex = localStorage.getItem("setting.decimalDigits");
+    $roundingMethod.selectedIndex = localStorage.getItem("setting.roundingMethod");
+    $src.value = localStorage.getItem("data.src");
+    calculate(null, null);
     
 </script>
 </html>
