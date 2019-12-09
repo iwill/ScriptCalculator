@@ -5,9 +5,13 @@
 <style>
     html {
         box-sizing: border-box;
+        font-family: monospace;
+        font-size: 13px;
     }
     *, *:before, *:after {
         box-sizing: inherit;
+        font-family: inherit;
+        font-size: inherit;
     }
     
     #left,
@@ -37,8 +41,6 @@
         width: 100%;
         height: 320px;
         resize: none; /* horizontal */
-        font-family: monospace;
-        font-size: 13px;
         margin: 0;
         padding: 5px;
         line-height: 15px;
@@ -52,17 +54,11 @@
         width: 0px;
         background: transparent; /* make scrollbar transparent */
     }
-    
-    button {
-        border-style: none;
-        font-size: 13px;
-        cursor: pointer;
-    }
 </style>
 </head>
 <body>
-    <div style="float: right; padding: 5px;">
-        Decimal Digits: <select id="decimalDigits" onchange="calculate(event, 'src')">
+    <div style="float: right; padding: 5px 0;">
+        DecimalDigits: <select id="decimalDigits" onchange="calculate(event, 'src')">
             <option value="-1">--</option>
             <option value="0">0</option>
             <option value="1">1</option>
@@ -82,12 +78,22 @@
             <option value="15">15</option>
             <option value="16">16</option>
         </select>
-        &nbsp;
-        Round Method: <select id="roundMethod" onchange="calculate(event, 'src')">
+        RoundingMethod: <select id="roundingMethod" onchange="calculate(event, 'src')">
             <option value="floor">floor</option>
             <option value="round">round</option>
             <option value="ceil">ceil</option>
         </select>
+        <button>reset</button>
+        |
+        <button>clear</button>
+        <button>copy</button>
+        <button>share</button>
+        <!--
+        TODO:
+        - `document.execCommand("copy");`
+        - share with #hash, but not change the href
+        - line-number for variables
+        -->
     </div>
     <div id="left">
         <textarea id="src" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
@@ -99,10 +105,10 @@
 <script type="text/javascript">
     function calculate(event, id) {
         var value = document.getElementById(id).value;
-        localStorage.setItem("data.value", value);
+        localStorage.setItem("data.src", value);
         
         localStorage.setItem("config.decimalDigits", document.getElementById("decimalDigits").selectedIndex);
-        localStorage.setItem("config.roundMethod", document.getElementById("roundMethod").selectedIndex);
+        localStorage.setItem("config.roundingMethod", document.getElementById("roundingMethod").selectedIndex);
         
         /// prepare
         var src = document.getElementById(id).value
@@ -164,9 +170,9 @@
                 if (type == "number") {
                     var decimalDigits = Number(document.getElementById("decimalDigits").value);
                     if (decimalDigits >= 0) {
-                        var roundMethod = document.getElementById("roundMethod").value;
+                        var roundingMethod = document.getElementById("roundingMethod").value;
                         var mi = Math.pow(10, decimalDigits);
-                        r = Math[roundMethod](r * mi) / mi;
+                        r = Math[roundingMethod](r * mi) / mi;
                     }
                     vars.$ = r;
                 }
@@ -200,14 +206,9 @@
     }
     
     document.getElementById("decimalDigits").selectedIndex = localStorage.getItem("config.decimalDigits");
-    document.getElementById("roundMethod").selectedIndex = localStorage.getItem("config.roundMethod");
-    document.getElementById("src").value = localStorage.getItem("data.value");
+    document.getElementById("roundingMethod").selectedIndex = localStorage.getItem("config.roundingMethod");
+    document.getElementById("src").value = localStorage.getItem("data.src");
     calculate(null, "src");
-    
-    // TODO:
-    // `document.execCommand("copy");`
-    // share with #hash, but not change the href
-    // line-number for variables
     
 </script>
 </html>
