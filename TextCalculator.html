@@ -3,8 +3,11 @@
 <head>
 <title>TextCalculator</title>
 <style>
-    * {
+    html {
         box-sizing: border-box;
+    }
+    *, *:before, *:after {
+        box-sizing: inherit;
     }
     
     #left,
@@ -24,13 +27,15 @@
         margin: 0 0 0 5px;
     }
     
-    #text {
+    #src {
         text-align: right;
         resize: none; /* horizontal */
     }
     #res {
+        resize: none; /* horizontal */
     }
-    .text {
+    #src,
+    #res {
         width: 100%;
         height: 320px;
         margin: 0;
@@ -43,69 +48,84 @@
         padding: 5px;
     }
     
-    #left button,
-    #right button {
+    button {
         border-style: none;
         font-size: 13px;
         cursor: pointer;
-        width: 25px;
-        height: 25px;
-        margin: 5px 0 0 0;
-    }
-    #left button {
-        float: right;
-    }
-    #right button {
-        float: left;
     }
 </style>
 </head>
 <body>
     <div id="left">
-        <textarea id="text" class="text" onkeyup="textChange(event, this.id)"></textarea>
-        <button>&lt;</button>
+        <textarea id="src" onkeyup="textChange(event, this.id)"></textarea>
     </div>
     <div id="right">
-        <pre id="res" class="text"></pre>
-        <button>&gt;</button>
+        <textarea id="res" readonly></textarea>
     </div>
-    <!--
-        TODO:
-        - method of Number & Math, prevent others
-        - res < >
-        - <pre> to <textarea>, sync scroll
-    -->
 </body>
 <script type="text/javascript">
     function textChange(event, id) {
         var value = document.getElementById(id).value;
         localStorage.setItem("value", value);
         
-        var text = document.getElementById(id).value
+        var src = document.getElementById(id).value
         .replace(/=/g, "==")
         .replace(/==\ *\/\//g, "//")
         .replace(/==\ *\n/g, "\n")
         .replace(/==\ *$/, "");
-        var source = text.split("\n");
+        var source = src.split("\n");
         
         var res = [];
         var vars = {};
         for (line of source) {
             var r;
             try {
+                /// validate
+                var commentIndex = line.indexOf("//");
+                var code = commentIndex >= 0 ? line.slice(0, commentIndex) : line;
+                if (code.search(/[\[\]\{\}]/g) >= 0) {
+                    throw "invalid symbol in `" + line + "`"
+                }
+                if (code.search(/\.\s*[A-z_$]+[A-z0-9_$]*\s*?\(/g) >= 0) {
+                    throw "invalid dot in `" + line + "`"
+                }
+                (code.match(/\w+\s*\(/g) || []).forEach(function(name, i) {
+                    name = name.slice(0, -1).trim();
+                    if (!Math[name]) {
+                        throw "invalid function in `" + line + "`"
+                    }
+                });
+                
+                // get variable
                 var v = line.match(/^\b[A-z_$]+[A-z0-9_$]*\:/);
                 if (v) {
                     line = line.slice(v.index + v[0].length);
                 }
-                line = line.replace(/\b[A-z_$]+[A-z0-9_$]*/g, function(w) {
-                    return vars[w] || w;
+                
+                // set variable
+                line = line.replace(/\b[A-z_$]+[A-z0-9_$]*/g, function(key) {
+                    return vars[key] || key;
                 });
-                line = line.replace(/\$\d*/g, function(p) {
-                    if (p == "$") return vars.$;
-                    var i = Number(p.slice(1));
-                    return i < res.length ? res[i] : p;
+                
+                // set $x
+                var nonNullRes = res.filter(function(r) {
+                    return r || r === 0
                 });
-                r = eval(line);
+                line = line.replace(/\$\d*/g, function($x) {
+                    if ($x == "$" || $x == "$0") return vars.$;
+                    var i = Number($x.slice(1)) - 1;
+                    return i >= 0 && i < nonNullRes.length ? nonNullRes[i] : $x;
+                });
+                
+                // eval
+                with (Math) {
+                    r = eval(line);
+                }
+                
+                // vars
+                if (r || r === 0) {
+                    vars.$ = r;
+                }
                 if (v) {
                     var key = v[0].slice(0, -1);
                     vars[key] = r;
@@ -114,15 +134,21 @@
             catch(e) {
                 r = "ERROR";
             }
+            
+            // res
             res.push(r);
-            if (r || r === 0) {
-                vars.$ = r;
-            }
         }
-        document.getElementById("res").innerText = res.join("\n");
+        
+        // var fixed = res.map((name, index) => name ? Number(name).toFixed(2) : name);
+        document.getElementById("res").value = res.join("\n");
     }
     
-    document.getElementById("text").value = localStorage.getItem("value");
-    textChange(null, "text");
+    document.getElementById("src").value = localStorage.getItem("value");
+    textChange(null, "src");
+    
+    // TODO:
+    // - copy exp = res
+    // - sync scrolling
+    
 </script>
 </html>
