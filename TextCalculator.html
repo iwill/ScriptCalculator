@@ -161,13 +161,16 @@
                 
                 /// vars
                 var type = typeof r;
-                if (type == "number" || type == "boolean") {
+                if (type == "number") {
                     var decimalDigits = Number(document.getElementById("decimalDigits").value);
                     if (decimalDigits >= 0) {
                         var roundMethod = document.getElementById("roundMethod").value;
                         var mi = Math.pow(10, decimalDigits);
                         r = Math[roundMethod](r * mi) / mi;
                     }
+                    vars.$ = r;
+                }
+                else if (type == "boolean") {
                     vars.$ = r;
                 }
                 else if (r) {
