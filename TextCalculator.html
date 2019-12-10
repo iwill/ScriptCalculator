@@ -2,6 +2,10 @@
 <html>
 <head>
 <title>TextCalculator</title>
+<!--
+    Created by MingLQ on 2019-11-22.
+    Copyright © 2019 MingLQ <minglq.9@gmail.com>. Released under the MIT license.
+-->
 <style type="text/css" media="all">
     html {
         --space: 5px;
@@ -88,6 +92,9 @@
 </style>
 </head>
 <body>
+    <div style="height: var(--top-height); float: left; padding: var(--space) 0;">
+        TextCalculator by MingLQ
+    </div>
     <div style="height: var(--top-height); float: right; padding: var(--space) 0;">
         DecimalDigits: <select id="decimalDigits" onchange="calculate(event, this.id)">
             <option value="-1">--</option>
@@ -157,9 +164,9 @@
                     throw "invalid dot in `" + line + "`";
                 }
                 
-                let label;
                 let funcName;
                 let funcArgs;
+                let label;
                 
                 /// get function
                 // `fun([arg0[, arg1]*]?):`
