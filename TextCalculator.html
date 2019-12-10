@@ -103,8 +103,10 @@
         |
         <button id="clear" onclick="clearSource(event, this.id)">clear</button>
         |
-        <button id="copy">copy</button><!-- TODO: document.execCommand("copy"); -->
-        <button id="share">share</button><!-- TODO: share with #hash, but not change the href, !!!: alert for overwriting or supports history -->
+        <button id="copy">copy</button>
+        <!-- TODO: document.execCommand("copy"); -->
+        <button id="share">share</button>
+        <!-- TODO: share with #hash, but not change the href, !!!: alert for overwriting or TODO: supports history -->
     </div>
     <div id="left" class="container">
         <textarea id="src" class="code" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
@@ -129,15 +131,13 @@
         $roundingMethod.disabled = ($decimalDigits.selectedIndex == 0);
         
         /// prepare
-        let src = $src.value
-        .replace(/=/g, "==")
-        .replace(/==\ *\/\//g, "//")
-        .replace(/==\ *\n/g, "\n")
-        .replace(/==\ *$/, "");
+        let src = $src.value.replace(/=/g, "==")
+        .replace(/==\s*\/\//, "//")
+        .replace(/==\s*\n/, "\n")
+        .replace(/==\s*$/, "");
         
-        let res = [], vals = [];
-        let ln = [];
-        let vars = {};
+        let res = [], ln = [];
+        let vals = [], vars = {}, funs = {};
         for (line of src.split("\n")) {
             let r;
             try {
@@ -152,47 +152,79 @@
                 if (/[\[\]\{\}'"\\;]/g.test(code)) {
                     throw "invalid symbol in `" + line + "`";
                 }
-                // `dot [spaces] (word-start) (non-number) words (word-end) [spaces] left-parenthesis`
+                // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis`
                 if (/\.\s*\b(?!\d)\w+\b\s*\(/g.test(code)) {
                     throw "invalid dot in `" + line + "`";
                 }
-                // `(word-start) (non-number) words (word-end) [spaces] left-parenthesis`
-                (code.match(/\b(?!\d)\w+\b\s*\(/g) || []).forEach(function(name, i) {
-                    name = name.slice(0, -1).trim();
-                    if (!Math[name] || name == "prototype" || name == "toSource" || name == "valueOf") {
-                        throw "invalid function in `" + line + "`";
-                    }
-                });
                 
-                /// get variable
-                let key;
-                // `(word-start) (non-number) words (word-end) colon`
-                let label = line.match(/^\b(?!\d)\w+\b\:/);
-                if (label) {
-                    key = label[0].slice(0, -1);
-                    if (Math[key]) {
-                        throw "ivalid label in `" + line + "`";
+                let label;
+                let funcName;
+                let funcArgs;
+                
+                /// get function
+                // `fun([arg0[, arg1]*]?):`
+                let makeRegExp = (str, opts) => new RegExp(str.raw[0].replace(/\s/gm, ""), opts || "");
+                // let regExp = /^(?<name>\b(?!\d)\w+)\s*(?<args>\((\s*\b(?!\d)\w+\s*(,\s*\b(?!\d)\w+\s*)*)?\))\:/;
+                let regExp = makeRegExp`
+                    ^
+                    (?<name>\b(?!\d)\w+)\s*
+                    (?<args>\((\s*
+                        \b(?!\d)\w+\s*
+                        (,\s*\b(?!\d)\w+\s*)*)?\)
+                    )\:
+                `;
+                let funcMatches = code.match(regExp);
+                if (funcMatches) {
+                    funcName = funcMatches.groups.name;
+                    if (Math[funcName]) {
+                        throw "ivalid func in `" + line + "`";
                     }
-                    line = line.slice(label.index + label[0].length);
+                    funcArgs = funcMatches.groups.args;
+                    code = code.slice(funcMatches.index + funcMatches[0].length);
+                }
+                else {
+                    /// get variable
+                    // `(word-start) (no-number) words (word-end) colon`
+                    let labelMatches = code.match(/^\b(?!\d)\w+\b\s*\:/);
+                    if (labelMatches) {
+                        label = labelMatches[0].slice(0, -1).trim();
+                        if (Math[label]) {
+                            throw "ivalid label in `" + line + "`";
+                        }
+                        code = code.slice(labelMatches.index + labelMatches[0].length);
+                    }
+                    
+                    /// namespace
+                    // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
+                    code = code.replace(/\b(?!\d)\w+\b\s*(?=\()/g, function(name) {
+                        name = name.trim();
+                        if ((!Math[name] && !funs[name]) || name == "prototype" || name == "toSource" || name == "valueOf") {
+                            throw "invalid function in `" + line + "`";
+                        }
+                        return (Math[name] ? "Math." : "funs.") + name;
+                    });
+                    
+                    /// set variable
+                    // `(word-start) (no-number) words (word-end) [spaces] (no-dot) (no-left-parenthesis)`
+                    code = code.replace(/\b(?!\d)\w+\s*(?!\.)(?!\()\b/g, function(v) {
+                        return vars[v] || v;
+                    });
+                    
+                    /// set $x
+                    // `dollar [numbers]`
+                    code = code.replace(/\$\d*/g, function($x) {
+                        if ($x == "$" || $x == "$0") return vars.$;
+                        let i = Number($x.slice(1)) - 1;
+                        return i >= 0 && i < vals.length ? vals[i] : undefined;
+                    });
                 }
                 
-                /// set variable
-                // `(word-start) (non-number) words (word-end)`
-                line = line.replace(/\b(?!\d)\w+\b/g, function(v) {
-                    return vars[v] || v;
-                });
-                
-                /// set $x
-                // `dollar [numbers]`
-                line = line.replace(/\$\d*/g, function($x) {
-                    if ($x == "$" || $x == "$0") return vars.$;
-                    let i = Number($x.slice(1)) - 1;
-                    return i >= 0 && i < vals.length ? vals[i] : undefined;
-                });
-                
                 /// eval
-                with (Math) {
-                    r = eval(line);
+                if (funcName && funcArgs) {
+                    eval("funs." + funcName + " = " + funcArgs + " => " + code + ";");
+                }
+                else {
+                    r = eval(code);
                 }
                 
                 /// vars
@@ -212,8 +244,8 @@
                 else if (r) {
                     throw "invalid expression in `" + line + "`";
                 }
-                if (key) {
-                    vars[key] = r;
+                if (label) {
+                    vars[label] = r;
                 }
             }
             catch(e) {
@@ -245,7 +277,7 @@
     
     function clearSource(event, id) {
         $src.select();
-        document.execCommand("insertText", false, "");
+        document.execCommand("insertText", false, ""); // enable undo
         calculate(null, id);
     }
     
