@@ -2,7 +2,16 @@
 <html>
 <head>
 <title>TextCalculator</title>
-<style>
+<style type="text/css" media="all">
+    html {
+        --space: 5px;
+    }
+    body {
+        --top-height: 30px;
+        --right-width: 240px;
+        --ln-width: 20px;
+    }
+    
     html {
         box-sizing: border-box;
         font-family: monospace;
@@ -13,97 +22,104 @@
         font-family: inherit;
         font-size: inherit;
     }
+    html {
+        height: 100%;
+        padding: 0;
+    }
+    body {
+        --margin: 8px;
+        height: calc(100% - var(--margin) * 2);
+        margin: var(--margin);
+        padding: 0;
+    }
     
-    #left,
     #right {
-        line-height: 0;
+        width: var(--right-width);
+        margin: 0 0 0 var(--space);
+        position: relative;
     }
     #left {
-        float: left;
-        display: inline-block;
-        width: calc(100% - 245px);
+        width: calc(100% - var(--right-width) - var(--space));
         margin: 0;
     }
-    #right {
+    .container {
+        height: calc(100% - var(--top-height) - var(--space) * 2);
         float: left;
         display: inline-block;
-        width: 240px;
-        margin: 0 0 0 5px;
+        line-height: 0;
     }
     
     #src {
         text-align: right;
     }
     #res {
+        padding-left: calc(var(--ln-width) + var(--space));
     }
-    #src,
-    #res {
+    #ln {
+        pointer-events: none;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: var(--ln-width);
+        padding: var(--space) 1px;
+        border-color: transparent;
+        background-clip: padding-box;
+        background-color: #00000008;
+        color: #AAAAAA;
+        text-align: right;
+    }
+    .code {
         width: 100%;
-        height: 320px;
-        resize: none; /* horizontal */
+        height: 100%;
+        resize: none;
+        /* overflow-x: hidden; */
         margin: 0;
-        padding: 5px;
-        line-height: 15px;
+        padding: var(--space);
         border-style: solid;
         border-width: 1px;
         border-color: gray;
+        line-height: 15px;
+        white-space: pre;
     }
-    
-    #src::-webkit-scrollbar,
-    #res::-webkit-scrollbar {
-        width: 0px;
-        background: transparent; /* make scrollbar transparent */
+    .code::-webkit-scrollbar {
+        width: 0;
+        background: transparent;
     }
 </style>
 </head>
 <body>
-    <div style="float: right; padding: 5px 0;">
+    <div style="height: var(--top-height); float: right; padding: var(--space) 0;">
         DecimalDigits: <select id="decimalDigits" onchange="calculate(event, this.id)">
             <option value="-1">--</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-            <option value="13">13</option>
-            <option value="14">14</option>
-            <option value="15">15</option>
-            <option value="16">16</option>
+            <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+            <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
+            <option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option>
+            <option value="15">15</option><option value="16">16</option>
         </select>
         RoundingMethod: <select id="roundingMethod" onchange="calculate(event, this.id)">
-            <option value="round">round</option>
-            <option value="floor">floor</option>
-            <option value="ceil">ceil</option>
+            <option value="round">round</option><option value="floor">floor</option><option value="ceil">ceil</option>
         </select>
         <button id="reset" onclick="resetSetting(event, this.id)">reset</button>
         |
         <button id="clear" onclick="clearSource(event, this.id)">clear</button>
-        <!-- TODO: history -->
         |
         <button id="copy">copy</button><!-- TODO: document.execCommand("copy"); -->
-        <button id="share">share</button><!-- TODO: share with #hash, but not change the href, !!!: alert for overwriting -->
+        <button id="share">share</button><!-- TODO: share with #hash, but not change the href, !!!: alert for overwriting or supports history -->
     </div>
-    <div id="left">
-        <textarea id="src" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
+    <div id="left" class="container">
+        <textarea id="src" class="code" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
-    <div id="right">
-        <!-- TODO: line-number for variables -->
-        <textarea readonly id="res" onscroll="syncScrolling(event, this.id)"></textarea>
+    <div id="right" class="container">
+        <textarea readonly id="res" class="code" onscroll="syncScrolling(event, this.id)"></textarea>
+        <textarea readonly id="ln" class="code" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
 </body>
 <script type="text/javascript">
-    var $src = document.getElementById("src");
-    var $res = document.getElementById("res");
-    var $decimalDigits = document.getElementById("decimalDigits");
-    var $roundingMethod = document.getElementById("roundingMethod");
+    let $src = document.querySelector("#src");
+    let $res = document.querySelector("#res");
+    let $ln = document.querySelector("#ln");
+    let $decimalDigits = document.querySelector("#decimalDigits");
+    let $roundingMethod = document.querySelector("#roundingMethod");
     
     function calculate(event, id) {
         localStorage.setItem("data.src", $src.value);
@@ -113,28 +129,35 @@
         $roundingMethod.disabled = ($decimalDigits.selectedIndex == 0);
         
         /// prepare
-        var src = $src.value
+        let src = $src.value
         .replace(/=/g, "==")
         .replace(/==\ *\/\//g, "//")
         .replace(/==\ *\n/g, "\n")
         .replace(/==\ *$/, "");
-        var source = src.split("\n");
         
-        var res = [];
-        var vars = {};
-        for (line of source) {
-            var r;
+        let res = [], vals = [];
+        let ln = [];
+        let vars = {};
+        for (line of src.split("\n")) {
+            let r;
             try {
+                if (vals.length >= 99) {
+                    throw "too many calculations";
+                }
+                
                 /// validate
-                var commentIndex = line.indexOf("//");
-                var code = commentIndex >= 0 ? line.slice(0, commentIndex) : line;
-                if (code.search(/[\[\]\{\}'";]/g) >= 0) {
+                let commentIndex = line.indexOf("//");
+                let code = commentIndex >= 0 ? line.slice(0, commentIndex) : line;
+                // symbols
+                if (/[\[\]\{\}'"\\;]/g.test(code)) {
                     throw "invalid symbol in `" + line + "`";
                 }
-                if (code.search(/\.\s*[A-z_$]+[A-z0-9_$]*\s*?\(/g) >= 0) {
+                // `dot [spaces] (word-start) (non-number) words (word-end) [spaces] left-parenthesis`
+                if (/\.\s*\b(?!\d)\w+\b\s*\(/g.test(code)) {
                     throw "invalid dot in `" + line + "`";
                 }
-                (code.match(/\w+\s*\(/g) || []).forEach(function(name, i) {
+                // `(word-start) (non-number) words (word-end) [spaces] left-parenthesis`
+                (code.match(/\b(?!\d)\w+\b\s*\(/g) || []).forEach(function(name, i) {
                     name = name.slice(0, -1).trim();
                     if (!Math[name] || name == "prototype" || name == "toSource" || name == "valueOf") {
                         throw "invalid function in `" + line + "`";
@@ -142,24 +165,29 @@
                 });
                 
                 /// get variable
-                var v = line.match(/^\b[A-z_$]+[A-z0-9_$]*\:/);
-                if (v) {
-                    line = line.slice(v.index + v[0].length);
+                let key;
+                // `(word-start) (non-number) words (word-end) colon`
+                let label = line.match(/^\b(?!\d)\w+\b\:/);
+                if (label) {
+                    key = label[0].slice(0, -1);
+                    if (Math[key]) {
+                        throw "ivalid label in `" + line + "`";
+                    }
+                    line = line.slice(label.index + label[0].length);
                 }
                 
                 /// set variable
-                line = line.replace(/\b[A-z_$]+[A-z0-9_$]*/g, function(key) {
-                    return vars[key] || key;
+                // `(word-start) (non-number) words (word-end)`
+                line = line.replace(/\b(?!\d)\w+\b/g, function(v) {
+                    return vars[v] || v;
                 });
                 
                 /// set $x
-                var nonNullRes = res.filter(function(r) {
-                    return r || r === 0;
-                });
+                // `dollar [numbers]`
                 line = line.replace(/\$\d*/g, function($x) {
                     if ($x == "$" || $x == "$0") return vars.$;
-                    var i = Number($x.slice(1)) - 1;
-                    return i >= 0 && i < nonNullRes.length ? nonNullRes[i] : $x;
+                    let i = Number($x.slice(1)) - 1;
+                    return i >= 0 && i < vals.length ? vals[i] : undefined;
                 });
                 
                 /// eval
@@ -168,12 +196,12 @@
                 }
                 
                 /// vars
-                var type = typeof r;
+                let type = typeof r;
                 if (type == "number") {
-                    var decimalDigits = Number($decimalDigits.value);
+                    let decimalDigits = Number($decimalDigits.value);
                     if (decimalDigits >= 0) {
-                        var roundingMethod = $roundingMethod.value;
-                        var mi = Math.pow(10, decimalDigits);
+                        let roundingMethod = $roundingMethod.value;
+                        let mi = Math.pow(10, decimalDigits);
                         r = Math[roundingMethod](r * mi) / mi;
                     }
                     vars.$ = r;
@@ -184,8 +212,7 @@
                 else if (r) {
                     throw "invalid expression in `" + line + "`";
                 }
-                if (v) {
-                    var key = v[0].slice(0, -1);
+                if (key) {
                     vars[key] = r;
                 }
             }
@@ -195,11 +222,19 @@
             
             /// res
             res.push(r);
+            if (typeof r == "number") {
+                vals.push(r);
+                ln.push((vals.length < 10 ? " " : "") + vals.length);
+            }
+            else {
+                ln.push("");
+            }
         }
         
         /// output
-        // var fixed = res.map((name, index) => name ? Number(name).toFixed(2) : name);
+        // let fixed = res.map((name, index) => name ? Number(name).toFixed(2) : name);
         $res.value = res.join("\n");
+        $ln.value = ln.join("\n");
     }
     
     function resetSetting(event, id) {
@@ -215,13 +250,17 @@
     }
     
     function syncScrolling(event, id) {
-        var targetID = (id == "res" ? "src" : "res");
-        document.getElementById(targetID).scrollTop = document.getElementById(id).scrollTop;
+        let $el = document.getElementById(id);
+        [$src, $res, $ln].forEach(function(e, i) {
+            e.scrollTop = $el.scrollTop;
+        });
     }
     
     $decimalDigits.selectedIndex = localStorage.getItem("setting.decimalDigits");
     $roundingMethod.selectedIndex = localStorage.getItem("setting.roundingMethod");
     $src.value = localStorage.getItem("data.src");
+    
+    $src.focus();
     calculate(null, null);
     
 </script>
