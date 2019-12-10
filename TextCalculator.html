@@ -146,6 +146,8 @@
         let res = [], ln = [];
         let vals = [], vars = {}, funs = {};
         for (line of src.split("\n")) {
+            line = line.trim();
+            
             let r;
             try {
                 if (vals.length >= 99) {
@@ -154,7 +156,7 @@
                 
                 /// validate
                 let commentIndex = line.indexOf("//");
-                let code = commentIndex >= 0 ? line.slice(0, commentIndex) : line;
+                let code = commentIndex >= 0 ? line.slice(0, commentIndex).trim() : line;
                 // symbols
                 if (/[\[\]\{\}'"\\;]/g.test(code)) {
                     throw "invalid symbol in `" + line + "`";
@@ -187,7 +189,7 @@
                         throw "ivalid func in `" + line + "`";
                     }
                     funcArgs = funcMatches.groups.args;
-                    code = code.slice(funcMatches.index + funcMatches[0].length);
+                    code = code.slice(funcMatches.index + funcMatches[0].length).trim();
                 }
                 else {
                     /// get variable
@@ -198,7 +200,7 @@
                         if (Math[label]) {
                             throw "ivalid label in `" + line + "`";
                         }
-                        code = code.slice(labelMatches.index + labelMatches[0].length);
+                        code = code.slice(labelMatches.index + labelMatches[0].length).trim();
                     }
                     
                     /// namespace
@@ -208,7 +210,7 @@
                         if ((!Math[name] && !funs[name]) || name == "prototype" || name == "toSource" || name == "valueOf") {
                             throw "invalid function in `" + line + "`";
                         }
-                        return (Math[name] ? "Math." : "funs.") + name;
+                        return Math[name] ? name : ("funs." + name);
                     });
                     
                     /// set variable
@@ -219,6 +221,10 @@
                     
                     /// set $x
                     // `dollar [numbers]`
+                    if (typeof res[res.length - 1] == "number"
+                        && code.length && !code.match(/^[\w\$\(]+/)) {
+                        code = "$ " + code;
+                    }
                     code = code.replace(/\$\d*/g, function($x) {
                         if ($x == "$" || $x == "$0") return vars.$;
                         let i = Number($x.slice(1)) - 1;
@@ -227,11 +233,13 @@
                 }
                 
                 /// eval
-                if (funcName && funcArgs) {
-                    eval("funs." + funcName + " = " + funcArgs + " => " + code + ";");
-                }
-                else {
-                    r = eval(code);
+                with (Math) {
+                    if (funcName && funcArgs) {
+                        eval("funs." + funcName + " = " + funcArgs + " => " + code + ";");
+                    }
+                    else {
+                        r = eval(code);
+                    }
                 }
                 
                 /// vars
