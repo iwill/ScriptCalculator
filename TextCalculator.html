@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<title>TextCalculator</title>
+<title>TextCalculator by MingLQ</title>
 <!--
     Created by MingLQ on 2019-11-22.
     Copyright © 2019 MingLQ <minglq.9@gmail.com>. Released under the MIT license.
@@ -112,11 +112,12 @@
         |
         <button id="copy">copy</button>
         <!-- TODO: document.execCommand("copy"); -->
+        <!-- TODO: show and copy as code -->
         <button id="share">share</button>
         <!-- TODO: share with #hash, but not change the href, !!!: alert for overwriting or TODO: supports history -->
     </div>
     <div id="left" class="container">
-        <textarea id="src" class="code" onkeyup="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
+        <textarea id="src" class="code" oninput="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
     <div id="right" class="container">
         <textarea readonly id="res" class="code" onscroll="syncScrolling(event, this.id)"></textarea>
@@ -131,6 +132,11 @@
     let $roundingMethod = document.querySelector("#roundingMethod");
     
     function calculate(event, id) {
+        if (event) {
+            console.log("key: " + event.key + " code: " + event.code);
+            console.log("keyCode: " + event.keyCode + " charCode: " + event.charCode);
+        }
+        
         localStorage.setItem("data.src", $src.value);
         localStorage.setItem("setting.decimalDigits", $decimalDigits.selectedIndex);
         localStorage.setItem("setting.roundingMethod", $roundingMethod.selectedIndex);
@@ -241,6 +247,7 @@
                         r = eval(code);
                     }
                 }
+                console.log(r ? (code + " = " + r) : code);
                 
                 /// vars
                 let type = typeof r;
