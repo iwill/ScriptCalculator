@@ -5,7 +5,7 @@
     Created by MingLQ on 2019-11-22.
     Copyright © 2019 MingLQ <minglq.9@gmail.com>. Released under the MIT license.
 -->
-<title>TextCalculator by MingLQ</title>
+<title>ScriptCalculator by MingLQ</title>
 <meta name="viewport" content="width=device-width, user-scalable=yes" />
 <style type="text/css" media="all">
     html {
@@ -99,7 +99,7 @@
     <!-- TODO: overflow: scroll / hide left; -->
     <div style="height: var(--top-height); position: relative; overflow-x: scroll;">
         <div style="position: absolute; left: 0; top: 0; padding: var(--space) 0;">
-            TextCalculator by MingLQ
+            ScriptCalculator by MingLQ
         </div>
         <div style="position: absolute; right: 0; top: 0; padding: var(--space) 0;">
             DecimalDigits: <select id="decimalDigits" onchange="calculate(event, this.id)">
@@ -118,13 +118,13 @@
             |
             <button id="export" disabled="disabled">export</button>
             <!--
-                TODO: export text+result
+                TODO: export script+result
                 - document.execCommand("copy");
-                - display text+result and export
+                - display script+result and export
             -->
             <button id="share" disabled="disabled">share</button>
             <!--
-                TODO: share settings+text
+                TODO: share settings+script
                 share with #hash, but not change the href
                 !!!: alert for overwriting
                 !!!: or supports history

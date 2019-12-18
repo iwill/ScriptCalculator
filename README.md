@@ -1,5 +1,5 @@
-TextCalculator
-==============
+ScriptCalculator
+================
 
 ## calculation
 
@@ -65,9 +65,9 @@ floor(2 / 3 * 100) / 100 // 0.66
 
 - reset setting
 
-- clear text
+- clear script
 
 - TODO: export result
 
-- TODO: share text
+- TODO: share script
 
