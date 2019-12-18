@@ -116,15 +116,15 @@
             |
             <button id="clear" onclick="clearSource(event, this.id)">clear</button>
             |
-            <button id="export">export</button>
+            <button id="export" disabled="disabled">export</button>
             <!--
-                TODO: export calculate result
+                TODO: export text+result
                 - document.execCommand("copy");
-                - show and export as code
+                - display text+result and export
             -->
-            <button id="share">share</button>
+            <button id="share" disabled="disabled">share</button>
             <!--
-                TODO: share settings and data
+                TODO: share settings+text
                 share with #hash, but not change the href
                 !!!: alert for overwriting
                 !!!: or supports history
@@ -192,7 +192,7 @@
                 let funcArgs;
                 let label;
                 
-                /// get function
+                /// find `function`
                 // `fun([arg0[, arg1]*]?):`
                 let makeRegExp = (str, opts) => new RegExp(str.raw[0].replace(/\s/gm, ""), opts || "");
                 // let regExp = /^(?<name>\b(?!\d)\w+)\s*(?<args>\((\s*\b(?!\d)\w+\s*(,\s*\b(?!\d)\w+\s*)*)?\))\:/;
@@ -214,7 +214,7 @@
                     code = code.slice(funcMatches.index + funcMatches[0].length).trim();
                 }
                 else {
-                    /// get variable
+                    /// find `label`
                     // `(word-start) (no-number) words (word-end) colon`
                     let labelMatches = code.match(/^\b(?!\d)\w+\b\s*\:/);
                     if (labelMatches) {
@@ -225,7 +225,7 @@
                         code = code.slice(labelMatches.index + labelMatches[0].length).trim();
                     }
                     
-                    /// namespace
+                    /// validate and insert namespace
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                     code = code.replace(/\b(?!\d)\w+\b\s*(?=\()/g, function(name) {
                         name = name.trim();
@@ -235,18 +235,21 @@
                         return Math[name] ? name : ("funs." + name);
                     });
                     
-                    /// set variable
+                    /// replace `label`
                     // `(word-start) (no-number) words (word-end) [spaces] (no-dot) (no-left-parenthesis)`
-                    code = code.replace(/\b(?!\d)\w+\s*(?!\.)(?!\()\b/g, function(v) {
-                        return vars[v] || v;
+                    code = code.replace(/\b(?!\d)\w+\s*(?!\.)(?!\()\b/g, function(l) {
+                        var v = vars[l];
+                        return typeof v == "number" ? v : undefined;
                     });
                     
-                    /// set $x
-                    // `dollar [numbers]`
+                    /// prepend `$`
                     if (typeof res[res.length - 1] == "number"
                         && code.length && !code.match(/^[\w\$\(]+/)) {
                         code = "$ " + code;
                     }
+                    
+                    /// replace `$x`
+                    // `dollar [numbers]`
                     code = code.replace(/\$\d*/g, function($x) {
                         if ($x == "$" || $x == "$0") return vars.$;
                         let i = Number($x.slice(1)) - 1;
@@ -287,6 +290,7 @@
                 }
             }
             catch(e) {
+                console.error(e);
                 r = "ERROR";
             }
             
