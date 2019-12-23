@@ -28,7 +28,7 @@ $1 % 2 // 1
 
 ```
 f(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
-f(1000000, 20, 7, 0.45, tax_rate, tax_qcd) // 77000000.45
+f(10000, 20, 7, tax_rate, tax_qcd) // 951920.0000000001
 ```
 
 - Math
@@ -40,9 +40,9 @@ floor(2 / 3 * 100) / 100 // 0.66
 ```
 
 ```
-       min(max(1, 2), 3) // 2
-              pow(2, 10) // 1024
-              sqrt(1024) // 32
+min(max(1, 2), 3) // 2
+       pow(2, 10) // 1024
+       sqrt(1024) // 32
 ```
 
 ## features
