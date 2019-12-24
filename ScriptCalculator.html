@@ -140,6 +140,34 @@
     </div>
 </body>
 <script type="text/javascript">
+    
+    for (let method of ["parseInt", "parseFloat"]) {
+        Math[method] = this[method];
+    }
+    for (let property of ["MAX_VALUE", "MIN_VALUE", "NEGATIVE_INFINITY", "POSITIVE_INFINITY", "NaN"]) {
+        Math[property] = Number[property];
+    }
+    
+    for (let method of ["round", "floor", "ceil"]) {
+        Number.prototype[method] = function(n) {
+            if (n < 0 || n > 100) return this.valueOf();
+            n = Math.floor(n);
+            var m = Math.pow(10, n >= 0 ? n : 0);
+            return Math[method](this * m) / m;
+        };
+    }
+    
+    function Radix(num, base) {
+        var prefix = (base == 8) ? "0" : (base == 16) ? "0x" : "";
+        this.num = num;
+        this.str = prefix + num.toString(base).toUpperCase();
+    }
+    Number.prototype.base = function(base) {
+        return new Radix(this.valueOf(), base);
+    };
+    
+    const rest = ["number", "boolean"];
+    
     // querySelector || querySelectorAll
     let $src = document.querySelector("#src");
     let $res = document.querySelector("#res");
@@ -166,7 +194,7 @@
         for (line of src.split("\n")) {
             line = line.trim();
             
-            let r;
+            let r, str;
             try {
                 if (vals.length >= 99) {
                     throw "too many calculations";
@@ -178,10 +206,6 @@
                 // symbols
                 if (/[\[\]\{\}'"\\;]/g.test(code)) {
                     throw "invalid symbol in `" + line + "`";
-                }
-                // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis`
-                if (/\.\s*\b(?!\d)\w+\b\s*\(/g.test(code)) {
-                    throw "invalid dot in `" + line + "`";
                 }
                 
                 let funcName;
@@ -203,7 +227,7 @@
                 let funcMatches = code.match(regExp);
                 if (funcMatches) {
                     funcName = funcMatches.groups.name;
-                    if (Math[funcName]) {
+                    if (Math[funcName] || Number.prototype[funcName]) {
                         throw "ivalid func in `" + line + "`";
                     }
                     funcArgs = funcMatches.groups.args;
@@ -215,7 +239,7 @@
                     let labelMatches = code.match(/^\b(?!\d)\w+\b\s*\:/);
                     if (labelMatches) {
                         label = labelMatches[0].slice(0, -1).trim();
-                        if (Math[label]) {
+                        if (Math[label] || Number.prototype[label]) {
                             throw "ivalid label in `" + line + "`";
                         }
                         code = code.slice(labelMatches.index + labelMatches[0].length).trim();
@@ -225,32 +249,36 @@
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                     code = code.replace(/\b(?!\d)\w+\b\s*(?=\()/g, function(name) {
                         name = name.trim();
-                        if ((!Math[name] && !funs[name]) || name == "prototype" || name == "toSource" || name == "valueOf") {
+                        if ((!funs[name] && !Math[name] && !Number.prototype[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
                             throw "invalid function in `" + line + "`";
                         }
-                        return Math[name] ? name : ("funs." + name);
+                        return funs[name] && !Math[name] && !Number.prototype[name] ? ("funs." + name) : name;
                     });
                     
                     /// replace `label`
-                    // `(word-start) (no-number) words (word-end) [spaces] (no-dot) (no-left-parenthesis)`
-                    code = code.replace(/\b(?!\d)\w+\s*(?!\.)(?!\()\b/g, function(l) {
+                    // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
+                    code = code.replace(/\b(?!\d)\w+\s*(?!\()\b/g, function(l) {
                         var v = vars[l];
-                        return v !== undefined ? v : l; // `l` but NOT undefined for PI
+                        return v !== undefined ? v : l; // `l` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
                     });
                     
-                    /// prepend `$`
-                    if (typeof res[res.length - 1] == "number"
-                        && code.length && !code.match(/^[\w\$\(]+/)) {
+                    /// replace `$x`
+                    /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words)`
+                    if (rest.includes(typeof res[res.length - 1]) && code.length && !code.match(/^[\$\(\w]+/)) {
                         code = "$ " + code;
                     }
-                    
-                    /// replace `$x`
                     // `dollar [numbers]`
                     code = code.replace(/\$\d*/g, function($x) {
                         if ($x == "$" || $x == "$0") return vars.$;
                         let i = Number($x.slice(1)) - 1;
                         return i >= 0 && i < vals.length ? vals[i] : undefined;
                     });
+                }
+                
+                // /\.\s*\b(?!\d)\w+\b\s*\(/g - `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis`
+                // `(word-start) Number (word-end) [spaces] dot`
+                if (/\bNumber\b\s*\./g.test(code)) {
+                    throw "invalid dot in `" + line + "`";
                 }
                 
                 /// eval
@@ -264,25 +292,28 @@
                 }
                 console.log(r ? (code + " = " + r) : code);
                 
+                if (r instanceof Radix) {
+                    str = r.str;
+                    r = r.num;
+                }
+                
                 /// vars
                 let type = typeof r;
                 if (type == "number") {
                     let decimalDigits = Number($decimalDigits.value);
                     if (decimalDigits >= 0) {
                         let roundingMethod = $roundingMethod.value;
-                        let mi = Math.pow(10, decimalDigits);
-                        r = Math[roundingMethod](r * mi) / mi;
+                        r = r[roundingMethod](decimalDigits);
                     }
                     vars.$ = r;
+                    if (label) vars[label] = r;
                 }
                 else if (type == "boolean") {
                     vars.$ = r;
+                    if (label) vars[label] = r;
                 }
                 else if (r) {
                     throw "invalid expression in `" + line + "`";
-                }
-                if (label) {
-                    vars[label] = r;
                 }
             }
             catch(e) {
@@ -291,8 +322,8 @@
             }
             
             /// res
-            res.push(r);
-            if (typeof r == "number") {
+            res.push(str || r);
+            if (rest.includes(typeof r)) {
                 vals.push(r);
                 ln.push((vals.length < 10 ? " " : "") + vals.length);
             }
