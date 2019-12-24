@@ -235,7 +235,7 @@
                     // `(word-start) (no-number) words (word-end) [spaces] (no-dot) (no-left-parenthesis)`
                     code = code.replace(/\b(?!\d)\w+\s*(?!\.)(?!\()\b/g, function(l) {
                         var v = vars[l];
-                        return typeof v == "number" ? v : undefined;
+                        return v !== undefined ? v : l; // `l` but NOT undefined for PI
                     });
                     
                     /// prepend `$`
