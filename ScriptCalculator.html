@@ -148,11 +148,6 @@
     let $roundingMethod = document.querySelector("#roundingMethod");
     
     function calculate(event, id) {
-        if (event) {
-            console.log("key: " + event.key + " code: " + event.code);
-            console.log("keyCode: " + event.keyCode + " charCode: " + event.charCode);
-        }
-        
         localStorage.setItem("data.src", $src.value);
         localStorage.setItem("setting.decimalDigits", $decimalDigits.selectedIndex);
         localStorage.setItem("setting.roundingMethod", $roundingMethod.selectedIndex);
