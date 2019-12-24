@@ -155,10 +155,11 @@
         $roundingMethod.disabled = ($decimalDigits.selectedIndex == 0);
         
         /// prepare
-        let src = $src.value.replace(/=/g, "==")
-        .replace(/==\s*\/\//, "//")
-        .replace(/==\s*\n/, "\n")
-        .replace(/==\s*$/, "");
+        let src = $src.value
+        .replace(/===/g, "==").replace(/==/g, "=").replace(/=/g, "==") // =, ==, === >> ==
+        .replace(/==\s*\/\//, "//") // before comments
+        .replace(/==\s*\n/, "\n") // before end of line
+        .replace(/==\s*$/, ""); // bofore end of string
         
         let res = [], ln = [];
         let vals = [], vars = {}, funs = {};
