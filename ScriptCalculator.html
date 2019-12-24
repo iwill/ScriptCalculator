@@ -157,13 +157,13 @@
         };
     }
     
-    function Radix(num, base) {
-        var prefix = (base == 8) ? "0" : (base == 16) ? "0x" : "";
+    function Radix(num, radix) {
+        var prefix = (radix == 8) ? "0" : (radix == 16) ? "0x" : "";
         this.num = num;
-        this.str = prefix + num.toString(base).toUpperCase();
+        this.str = prefix + num.toString(radix).toUpperCase();
     }
-    Number.prototype.base = function(base) {
-        return new Radix(this.valueOf(), base);
+    Number.prototype.toRadix = function(radix) {
+        return new Radix(this.valueOf(), radix);
     };
     
     const rest = ["number", "boolean"];
@@ -317,7 +317,7 @@
                 }
             }
             catch(e) {
-                console.error(e);
+                console.warn(e);
                 r = "ERROR";
             }
             

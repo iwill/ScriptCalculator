@@ -7,7 +7,7 @@ ScriptCalculator
 
 - comments
 
-- variables: `<last>`, `$`, `$n`, ``
+- variables: `<last>`, `$`, `$n`
 
 ```
  1 + 2 // 3
