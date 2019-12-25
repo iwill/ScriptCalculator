@@ -9,6 +9,8 @@
 <meta name="viewport" content="width=device-width, user-scalable=yes" />
 <style type="text/css" media="all">
     html {
+        --margin: 8px;
+        --space-l: var(--margin);
         --space: 5px;
     }
     body {
@@ -32,7 +34,6 @@
         padding: 0;
     }
     body {
-        --margin: 8px;
         height: calc(100% - var(--margin) * 2);
         margin: var(--margin);
         padding: 0;
@@ -40,11 +41,11 @@
     
     #right {
         width: var(--right-width);
-        margin: 0 0 0 var(--space);
+        margin: 0 0 0 var(--space-l);
         position: relative;
     }
     #left {
-        width: calc(100% - var(--right-width) - var(--space));
+        width: calc(100% - var(--right-width) - var(--space-l));
         margin: 0;
     }
     .container {
@@ -132,7 +133,7 @@
         </div>
     </div>
     <div id="left" class="container">
-        <textarea id="src" class="code" oninput="calculate(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
+        <textarea id="src" class="code" oninput="calculate(event, this.id)" onkeydown="shortcuts(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
     </div>
     <div id="right" class="container">
         <textarea readonly id="res" class="code" onscroll="syncScrolling(event, this.id)"></textarea>
@@ -141,31 +142,24 @@
 </body>
 <script type="text/javascript">
     
-    for (let method of ["parseInt", "parseFloat"]) {
-        Math[method] = this[method];
+    function Radix(num, radix) {
+        let prefix = (radix == 2) ? "0b" : (radix == 8) ? "0o" : (radix == 16) ? "0x" : "";
+        this.num = num;
+        this.str = prefix + num.toString(radix).toUpperCase();
     }
-    for (let property of ["MAX_VALUE", "MIN_VALUE", "NEGATIVE_INFINITY", "POSITIVE_INFINITY", "NaN"]) {
-        Math[property] = Number[property];
-    }
+    Math.format = function(num, radix) {
+        return new Radix(num, radix);
+    };
     
     for (let method of ["round", "floor", "ceil"]) {
         Number.prototype[method] = function(n) {
             n = n || 0;
             if (Math.abs(n) > 100) return this.valueOf();
             n = n > 0 ? Math.floor(n) : Math.ceil(n);
-            var m = Math.pow(10, n);
+            let m = Math.pow(10, n);
             return Math[method](this * m) / m;
         };
     }
-    
-    function Radix(num, radix) {
-        var prefix = (radix == 8) ? "0" : (radix == 16) ? "0x" : "";
-        this.num = num;
-        this.str = prefix + num.toString(radix).toUpperCase();
-    }
-    Number.prototype.toRadix = function(radix) {
-        return new Radix(this.valueOf(), radix);
-    };
     
     const rest = ["number", "boolean"];
     
@@ -259,7 +253,7 @@
                     /// replace `label`
                     // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
                     code = code.replace(/\b(?!\d)\w+\s*(?!\()\b/g, function(l) {
-                        var v = vars[l];
+                        let v = vars[l];
                         return v !== undefined ? v : l; // `l` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
                     });
                     
@@ -337,6 +331,43 @@
         // let fixed = res.map((name, index) => name ? Number(name).toFixed(2) : name);
         $res.value = res.join("\n");
         $ln.value = ln.join("\n");
+    }
+    
+    function shortcuts(event, id) {
+        if (document.activeElement != $src
+            || event.altKey || event.metaKey || event.repeat || event.isComposing) {
+            return;
+        }
+        
+        var key = event.key.toLowerCase();
+        if (event.ctrlKey && ["c", "u"].includes(key)) {
+            let value = $src.value;
+            let start = $src.selectionStart, end = $src.selectionEnd;
+            if (start == end) {
+                while (start > 0 && value[start - 1].match(/[\w$]/)) {
+                    start -= 1;
+                }
+                while (end < value.length - 1 && value[end].match(/[\w$]/)) {
+                    end += 1;
+                }
+            }
+            
+            let selection = value.substring(start, end);
+            if (key == "c") {
+                selection = selection[0][event.shiftKey ? "toLowerCase" : "toUpperCase"]() + selection.substring(1);
+            }
+            else {
+                selection = selection[event.shiftKey ? "toLowerCase" : "toUpperCase"]();
+            }
+            
+            $src.selectionStart = start;
+            $src.selectionEnd = end;
+            document.execCommand("insertText", false, selection); // enable undo
+            $src.selectionStart = start;
+            $src.selectionEnd = end;
+            
+            calculate(null, id);
+        }
     }
     
     function resetSetting(event, id) {
