@@ -150,9 +150,10 @@
     
     for (let method of ["round", "floor", "ceil"]) {
         Number.prototype[method] = function(n) {
-            if (n < 0 || n > 100) return this.valueOf();
-            n = Math.floor(n);
-            var m = Math.pow(10, n >= 0 ? n : 0);
+            n = n || 0;
+            if (Math.abs(n) > 100) return this.valueOf();
+            n = n > 0 ? Math.floor(n) : Math.ceil(n);
+            var m = Math.pow(10, n);
             return Math[method](this * m) / m;
         };
     }
