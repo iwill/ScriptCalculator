@@ -152,12 +152,17 @@
     };
     
     for (let method of ["round", "floor", "ceil"]) {
+        let _method = "_" + method;
+        Math[_method] = Math[method];
+        Math[method] = function(n, l) {
+            return n[method](l);
+        };
         Number.prototype[method] = function(n) {
             n = n || 0;
             if (Math.abs(n) > 100) return this.valueOf();
-            n = n > 0 ? Math.floor(n) : Math.ceil(n);
+            n = n > 0 ? Math._floor(n) : Math._ceil(n);
             let m = Math.pow(10, n);
-            return Math[method](this * m) / m;
+            return Math[_method](this * m) / m;
         };
     }
     

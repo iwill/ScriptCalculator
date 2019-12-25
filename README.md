@@ -29,7 +29,7 @@ f(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
 f(10000, 20, 7, tax_rate, tax_qcd) // 951920.0000000001
 ```
 
-- Math & Number & Values
+- Math & Number & values
 
 ```
 min(max(1, 2), 3) // 2
@@ -38,15 +38,12 @@ min(max(1, 2), 3) // 2
 ```
 
 ```
-round(2 / 3 * 100) / 100 // 0.67
-floor(2 / 3 * 100) / 100 // 0.66
- ceil(2 / 3 * 100) / 100 // 0.67
-```
+round(2000 / 3 * 100) / 100 // 666.67
+round(2000 / 3, 2)          // 666.67
 
-```
-2000 / 3   // 666.67
-.round(3)  // 666.67
-.floor(2)  // 666.67
+2000 / 3   // 666.6666666666666
+.round(3)  // 666.667
+.floor(2)  // 666.66
 .ceil(1)   // 666.7
 .floor()   // 666
 .floor(-1) // 660
@@ -80,6 +77,8 @@ $              // 32
 - line number
 
 - local storage
+
+- change case
 
 - sync scrolling
 
