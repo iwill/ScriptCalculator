@@ -5,11 +5,11 @@ ScriptCalculator
 
 - basic: `+`, `-`, `*`, `/`, `%`, `()`
 
-- comments
-
 - variables: `<last>`, `$`, `$n`
 
 - functions
+
+- comments
 
 ```
  1 + 2 // 3
@@ -29,7 +29,7 @@ f(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
 f(10000, 20, 7, tax_rate, tax_qcd) // 951920.0000000001
 ```
 
-- Math & Number & values
+- Math & values
 
 ```
 min(max(1, 2), 3) // 2
