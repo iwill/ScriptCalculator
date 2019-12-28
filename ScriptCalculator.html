@@ -103,26 +103,23 @@
             ScriptCalculator by MingLQ [<a href="https://github.com/iwill/ScriptCalculator" target="blank">GitHub</a>]
         </div>
         <div style="position: absolute; right: 0; top: 0; padding: var(--space) 0;">
-            DecimalDigits: <select id="decimalDigits" onchange="calculate(event, this.id)">
+            DecimalDigits: <select id="decimalDigits" onchange="calculate(event, this)">
                 <option value="-1">--</option>
                 <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
                 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
                 <option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option>
                 <option value="15">15</option><option value="16">16</option>
             </select>
-            RoundingMethod: <select id="roundingMethod" onchange="calculate(event, this.id)">
+            RoundingMethod: <select id="roundingMethod" onchange="calculate(event, this)">
                 <option value="round">round</option><option value="floor">floor</option><option value="ceil">ceil</option>
             </select>
-            <button id="reset" onclick="resetSetting(event, this.id)">reset</button>
-            |
-            <button id="clear" onclick="clearSource(event, this.id)">clear</button>
-            |
-            <button id="export" disabled="disabled">export</button>
+            <button id="reset" onclick="resetSetting(event, this)">reset</button>
             <!--
-                TODO: export script+result
-                - document.execCommand("copy");
-                - display script+result and export
+            |
+            <button id="clear" onclick="clearSource(event, this)">clear</button>
             -->
+            |
+            <button id="copy" onclick="copyScript(event, this)">copy</button>
             <button id="share" disabled="disabled">share</button>
             <!--
                 TODO: share settings+script
@@ -133,11 +130,12 @@
         </div>
     </div>
     <div id="left" class="container">
-        <textarea id="src" class="code" oninput="calculate(event, this.id)" onkeydown="shortcuts(event, this.id)" onscroll="syncScrolling(event, this.id)"></textarea>
+        <textarea id="src" class="code" oninput="calculate(event, this)" onkeydown="shortcuts(event, this)" onscroll="syncScrolling(event, this)"></textarea>
     </div>
     <div id="right" class="container">
-        <textarea readonly id="res" class="code" onscroll="syncScrolling(event, this.id)"></textarea>
-        <textarea readonly id="ln" class="code" onscroll="syncScrolling(event, this.id)"></textarea>
+        <textarea readonly id="res" class="code" onscroll="syncScrolling(event, this)"></textarea>
+        <textarea readonly id="ln" class="code" onscroll="syncScrolling(event, this)"></textarea>
+        <textarea readonly id="script" style="display: hidden; position: fixed; right: 0; bottom: 0; width: 0; height: 0;"></textarea>
     </div>
 </body>
 <script type="text/javascript">
@@ -171,10 +169,11 @@
     let $src = document.querySelector("#src");
     let $res = document.querySelector("#res");
     let $ln = document.querySelector("#ln");
+    let $script = document.querySelector("#script");
     let $decimalDigits = document.querySelector("#decimalDigits");
     let $roundingMethod = document.querySelector("#roundingMethod");
     
-    function calculate(event, id) {
+    function calculate(event, target) {
         localStorage.setItem("data.src", $src.value);
         localStorage.setItem("setting.decimalDigits", $decimalDigits.selectedIndex);
         localStorage.setItem("setting.roundingMethod", $roundingMethod.selectedIndex);
@@ -188,11 +187,12 @@
         .replace(/==\s*\n/, "\n") // before end of line
         .replace(/==\s*$/, ""); // bofore end of string
         
-        let res = [], ln = [];
+        let res = [], ln = [], scripts = [];
         let vals = [], vars = {}, funs = {};
         for (line of src.split("\n")) {
             line = line.trim();
             
+            let code, comment;
             let r, str;
             try {
                 if (vals.length >= 99) {
@@ -201,7 +201,8 @@
                 
                 /// validate
                 let commentIndex = line.indexOf("//");
-                let code = commentIndex >= 0 ? line.slice(0, commentIndex).trim() : line;
+                code = commentIndex >= 0 ? line.slice(0, commentIndex).trim() : line;
+                comment = commentIndex >= 0 ? line.slice(commentIndex).trim() : null;
                 // symbols
                 if (/[\[\]\{\}'"\\;]/g.test(code)) {
                     throw "invalid symbol in `" + line + "`";
@@ -323,9 +324,15 @@
             if (rest.includes(typeof r)) {
                 vals.push(r);
                 ln.push((vals.length < 10 ? " " : "") + vals.length);
+                var s = code + " = " + r;
+                if (comment) {
+                    s = s + " " + comment;
+                }
+                scripts.push(s);
             }
             else {
                 ln.push("");
+                scripts.push(comment || "");
             }
         }
         
@@ -333,9 +340,10 @@
         // let fixed = res.map((name, index) => name ? Number(name).toFixed(2) : name);
         $res.value = res.join("\n");
         $ln.value = ln.join("\n");
+        $script.value = scripts.join("\n");
     }
     
-    function shortcuts(event, id) {
+    function shortcuts(event, target) {
         if (document.activeElement != $src
             || event.altKey || event.metaKey || event.repeat || event.isComposing) {
             return;
@@ -368,26 +376,32 @@
             $src.selectionStart = start;
             $src.selectionEnd = end;
             
-            calculate(null, id);
+            calculate(null, target);
         }
     }
     
-    function resetSetting(event, id) {
+    function resetSetting(event, target) {
         $decimalDigits.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
-        calculate(null, id);
+        calculate(null, target);
     }
     
-    function clearSource(event, id) {
+    function clearSource(event, target) {
         $src.select();
         document.execCommand("insertText", false, ""); // enable undo
-        calculate(null, id);
+        calculate(null, target);
     }
     
-    function syncScrolling(event, id) {
-        let $el = document.getElementById(id);
+    function copyScript(event, target) {
+        $script.focus();
+        $script.select();
+        document.execCommand("copy");
+        (target || $src).focus();
+    }
+    
+    function syncScrolling(event, target) {
         [$src, $res, $ln].forEach(function(e, i) {
-            e.scrollTop = $el.scrollTop;
+            e.scrollTop = target.scrollTop;
         });
     }
     
