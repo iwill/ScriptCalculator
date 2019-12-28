@@ -91,7 +91,7 @@ $              // 32
 
 - reset setting
 
-- clear script
+- // clear script
 
 - TODO: export result
 
