@@ -91,9 +91,9 @@ $              // 32
 
 - reset setting
 
-- // clear script
+- // clear source
 
-- TODO: export result
+- copy script
 
-- TODO: share script
+- TODO: share link with source
 
