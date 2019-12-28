@@ -93,7 +93,7 @@ $              // 32
 
 - // clear source
 
-- copy script
+- copy output
 
-- TODO: share link with source
+- TODO: share script, settings via link#hash
 
