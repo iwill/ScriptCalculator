@@ -214,7 +214,7 @@
                 
                 let funcName;
                 let funcArgs;
-                let label;
+                let variable;
                 
                 /// find `function`
                 // `fun([arg0[, arg1]*]?):`
@@ -238,15 +238,15 @@
                     code = code.slice(funcMatches.index + funcMatches[0].length).trim();
                 }
                 else {
-                    /// find `label`
+                    /// find `variable`
                     // `(word-start) (no-number) words (word-end) colon`
-                    let labelMatches = code.match(/^\b(?!\d)\w+\b\s*\:/);
-                    if (labelMatches) {
-                        label = labelMatches[0].slice(0, -1).trim();
-                        if (Math[label]) {
-                            throw "ivalid label in `" + line + "`";
+                    let variableMatches = code.match(/^\b(?!\d)\w+\b\s*\:/);
+                    if (variableMatches) {
+                        variable = variableMatches[0].slice(0, -1).trim();
+                        if (Math[variable]) {
+                            throw "ivalid variable in `" + line + "`";
                         }
-                        code = code.slice(labelMatches.index + labelMatches[0].length).trim();
+                        code = code.slice(variableMatches.index + variableMatches[0].length).trim();
                     }
                     
                     /// validate and insert namespace
@@ -259,7 +259,7 @@
                         return functions[name] && !Math[name] ? ("functions." + name) : name;
                     });
                     
-                    /// replace `label`
+                    /// replace `variable`
                     // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
                     code = code.replace(/\b(?!\d)\w+\s*(?!\()\b/g, function(l) {
                         let v = variables[l];
@@ -305,11 +305,11 @@
                         valueResult = Math[roundingMethod](valueResult, decimalDigits);
                     }
                     variables.$ = valueResult;
-                    if (label) variables[label] = valueResult;
+                    if (variable) variables[variable] = valueResult;
                 }
                 else if (type == "boolean") {
                     variables.$ = valueResult;
-                    if (label) variables[label] = valueResult;
+                    if (variable) variables[variable] = valueResult;
                 }
                 else if (valueResult) {
                     throw "invalid expression in `" + line + "`";
