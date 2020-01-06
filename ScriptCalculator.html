@@ -104,6 +104,12 @@
         </div>
         <div style="position: absolute; right: 0; top: 0; padding: var(--space) 0;">
             DecimalDigits: <select id="decimalDigits" onchange="calculate(event, this)">
+                <option value="-1">--</option><option value="0">0</option>
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                <option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option>
+            </select>
                 <option value="-1">--</option>
                 <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
                 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
@@ -122,10 +128,10 @@
             <button id="copy" onclick="copyOutput(event, this)">copy</button>
             <button id="share" disabled="disabled">share</button>
             <!--
-                TODO: share script+settings via link#hash
-                share with #hash, but not change the href
-                ???: alert for overwriting
-                !!!: or supports history
+            TODO: share script+settings via link#hash
+            share with #hash, but not change the href
+            ???: alert for overwriting
+            !!!: or supports history
             -->
         </div>
     </div>
@@ -140,24 +146,24 @@
 </body>
 <script type="text/javascript">
     
-    function Radix(num, radix) {
+    function Radix(number, radix) {
         let prefix = (radix == 2) ? "0b" : (radix == 8) ? "0o" : (radix == 16) ? "0x" : "";
-        this.num = num;
-        this.displayResult = prefix + num.toString(radix).toUpperCase();
+        this.number = number;
+        this.display = prefix + number.toString(radix).toUpperCase();
     }
-    Math.format = function(num, radix) {
-        return new Radix(num, radix);
+    Math.format = function(number, radix) {
+        return new Radix(number, radix);
     };
     
     for (let method of ["round", "floor", "ceil"]) {
         let _method = "_" + method;
         Math[_method] = Math[method];
-        Math[method] = function(num, len) {
+        Math[method] = function(number, len) {
             len = len || 0;
-            if (this.abs(len) > 100) return num;
+            if (this.abs(len) > 100) return number;
             len = len > 0 ? this._floor(len) : this._ceil(len);
             let m = this.pow(10, len);
-            return this[_method](num * m) / m;
+            return this[_method](number * m) / m;
         };
     }
     
@@ -193,7 +199,7 @@
             line = line.trim();
             
             let code, comment, func;
-            let valueResult, displayResult;
+            let value, display;
             try {
                 if (values.length >= 99) {
                     throw "too many calculations";
@@ -218,7 +224,7 @@
                 
                 /// find `function`
                 // `fun([arg0[, arg1]*]?):`
-                let makeRegExp = (displayResult, opts) => new RegExp(displayResult.raw[0].replace(/\s/gm, ""), opts || "");
+                let makeRegExp = (display, opts) => new RegExp(display.raw[0].replace(/\s/gm, ""), opts || "");
                 // let regExp = /^(?<name>\b(?!\d)\w+)\s*(?<args>\((\s*\b(?!\d)\w+\s*(,\s*\b(?!\d)\w+\s*)*)?\))\:/;
                 let regExp = makeRegExp`
                     ^
@@ -286,47 +292,47 @@
                         func = funcName + funcArgs + ": " + code;
                     }
                     else {
-                        valueResult = eval(code);
+                        value = eval(code);
                     }
                 }
-                console.log(valueResult ? (code + " = " + valueResult) : code);
+                console.log(value ? (code + " = " + value) : code);
                 
-                if (valueResult instanceof Radix) {
-                    displayResult = valueResult.displayResult;
-                    valueResult = valueResult.num;
+                if (value instanceof Radix) {
+                    display = value.display;
+                    value = value.number;
                 }
                 
                 /// variables
-                let type = typeof valueResult;
+                let type = typeof value;
                 if (type == "number") {
                     let decimalDigits = Number($decimalDigits.value);
                     if (decimalDigits >= 0) {
                         let roundingMethod = $roundingMethod.value;
-                        valueResult = Math[roundingMethod](valueResult, decimalDigits);
+                        value = Math[roundingMethod](value, decimalDigits);
                     }
-                    variables.$ = valueResult;
-                    if (variable) variables[variable] = valueResult;
+                    variables.$ = value;
+                    if (variable) variables[variable] = value;
                 }
                 else if (type == "boolean") {
-                    variables.$ = valueResult;
-                    if (variable) variables[variable] = valueResult;
+                    variables.$ = value;
+                    if (variable) variables[variable] = value;
                 }
-                else if (valueResult) {
+                else if (value) {
                     throw "invalid expression in `" + line + "`";
                 }
             }
             catch(e) {
                 console.warn(e);
-                valueResult = "ERROR";
+                value = "ERROR";
             }
             
             /// result
-            result.push(displayResult || valueResult);
+            result.push(display || value);
             comment = comment ? (" " + comment) : "";
-            if (resultTypes.includes(typeof valueResult)) {
-                values.push(valueResult);
+            if (resultTypes.includes(typeof value)) {
+                values.push(value);
                 lineNumber.push((values.length < 10 ? " " : "") + values.length);
-                output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + valueResult + comment);
+                output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + value + comment);
             }
             else {
                 lineNumber.push("");
@@ -349,18 +355,18 @@
         
         var key = event.key.toLowerCase();
         if (event.ctrlKey && ["c", "u"].includes(key)) {
-            let value = $script.value;
+            let script = $script.value;
             let start = $script.selectionStart, end = $script.selectionEnd;
             if (start == end) {
-                while (start > 0 && value[start - 1].match(/[\w$]/)) {
+                while (start > 0 && script[start - 1].match(/[\w$]/)) {
                     start -= 1;
                 }
-                while (end < value.length - 1 && value[end].match(/[\w$]/)) {
+                while (end < script.length - 1 && script[end].match(/[\w$]/)) {
                     end += 1;
                 }
             }
             
-            let selection = value.substring(start, end);
+            let selection = script.substring(start, end);
             if (key == "c") {
                 selection = selection[0][event.shiftKey ? "toLowerCase" : "toUpperCase"]() + selection.substring(1);
             }
