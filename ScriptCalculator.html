@@ -110,6 +110,15 @@
                 <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
                 <option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option>
             </select>
+            <!--
+            TODO: FixedPoint: <select id="fixedPoint" onchange="calculate(event, this)">
+                <option value="-1">--</option>
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                <option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option>
+            </select>
+            -->
             RoundingMethod: <select id="roundingMethod" onchange="calculate(event, this)">
                 <option value="round">round</option><option value="floor">floor</option><option value="ceil">ceil</option>
             </select>
@@ -171,11 +180,13 @@
     let $lineNumber = document.querySelector("#lineNumber");
     let $output = document.querySelector("#output");
     let $decimalDigits = document.querySelector("#decimalDigits");
+    // let $fixedPoint = document.querySelector("#fixedPoint");
     let $roundingMethod = document.querySelector("#roundingMethod");
     
     function calculate(event, target) {
         localStorage.setItem("data.script", $script.value);
         localStorage.setItem("setting.decimalDigits", $decimalDigits.selectedIndex);
+        // localStorage.setItem("setting.fixedPoint", $fixedPoint.selectedIndex);
         localStorage.setItem("setting.roundingMethod", $roundingMethod.selectedIndex);
         
         $roundingMethod.disabled = ($decimalDigits.selectedIndex == 0);
@@ -187,6 +198,15 @@
         .replace(/==\s*\n/, "\n") // before end of line
         .replace(/==\s*$/, ""); // bofore end of string
         
+        // TODO: value.toLocaleString(undefined, {style: "decimal"/"currency"/"percent", currency: "USD"/"EUR"/"CNY", useGrouping: true});
+        // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString
+        // let display = value.toLocaleString();
+        /* TODO: lines [{
+            result: number / "" / "ERROR",
+            display: formatted-number / "" / "ERROR",
+            lineNumber: number / "",
+            output: `code = value // comment`
+        }, ...] */
         let result = [], lineNumber = [], output = [];
         let values = [], variables = {}, functions = {};
         for (line of script.split("\n")) {
@@ -224,7 +244,7 @@
                     ^
                     (?<name>\b(?!\d)\w+)\s*
                     (?<args>\((\s*
-                        \b(?!\d)\w+\s*
+                             \b(?!\d)\w+\s*
                         (,\s*\b(?!\d)\w+\s*)*)?\)
                     )\:
                 `;
@@ -380,6 +400,7 @@
     
     function resetSetting(event, target) {
         $decimalDigits.selectedIndex = 0;
+        // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
         calculate(null, target);
     }
@@ -404,6 +425,7 @@
     }
     
     $decimalDigits.selectedIndex = localStorage.getItem("setting.decimalDigits");
+    // $fixedPoint.selectedIndex = localStorage.getItem("setting.fixedPoint");
     $roundingMethod.selectedIndex = localStorage.getItem("setting.roundingMethod");
     $script.value = localStorage.getItem("data.script") || localStorage.getItem("data.src");
     
