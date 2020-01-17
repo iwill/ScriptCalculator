@@ -212,7 +212,7 @@
         for (line of script.split("\n")) {
             line = line.trim();
             
-            let code, comment, func;
+            let code, func, comment;
             let value, display;
             try {
                 if (values.length >= 99) {
@@ -228,7 +228,7 @@
                     throw "invalid symbol in `" + line + "`";
                 }
                 // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis`
-                if (/\.\s*\b(?!\d)\w+\b\s*\(/g.test(code)) {
+                if (/\.\s*[A-z_][A-z0-9_]*\s*\(/g.test(code)) {
                     throw "invalid dot in `" + line + "`";
                 }
                 
@@ -237,17 +237,27 @@
                 let variable;
                 
                 /// find `function`
-                // `fun([arg0[, arg1]*]?):`
-                let makeRegExp = (display, opts) => new RegExp(display.raw[0].replace(/\s/gm, ""), opts || "");
-                // let regExp = /^(?<name>\b(?!\d)\w+)\s*(?<args>\((\s*\b(?!\d)\w+\s*(,\s*\b(?!\d)\w+\s*)*)?\))\:/;
+                // `fun([arg0[, argN]*]?):`
+                // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
+                // tagged templates:
+                // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript
+                // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
+                let makeRegExp = (regExp, opts) => new RegExp(regExp.raw[0].replace(/\s/mg, ""), opts || "");
+                // ???: `[A-z_][A-z0-9_]*` == `[A-z_][A-z0-9_]*`
                 let regExp = makeRegExp`
-                    ^
-                    (?<name>\b(?!\d)\w+)\s*
-                    (?<args>\((\s*
-                             \b(?!\d)\w+\s*
-                        (,\s*\b(?!\d)\w+\s*)*)?\)
-                    )\:
-                `;
+                    ^ \s*
+                    (?<name> [A-z_][A-z0-9_]* ) \s*
+                    (?<args>
+                        \( \s*
+                        (
+                                  [A-z_][A-z0-9_]* \s*
+                            (,\s* [A-z_][A-z0-9_]* \s* )*
+                        )?
+                        \)
+                    ) \s*
+                    \:
+                `; // `${"img"}`
+                
                 let funcMatches = code.match(regExp);
                 if (funcMatches) {
                     funcName = funcMatches.groups.name;
@@ -260,7 +270,7 @@
                 else {
                     /// find `variable`
                     // `(word-start) (no-number) words (word-end) colon`
-                    let variableMatches = code.match(/^\b(?!\d)\w+\b\s*\:/);
+                    let variableMatches = code.match(/^[A-z_][A-z0-9_]*\s*\:/);
                     if (variableMatches) {
                         variable = variableMatches[0].slice(0, -1).trim();
                         if (Math[variable]) {
@@ -271,7 +281,7 @@
                     
                     /// validate and insert namespace
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
-                    code = code.replace(/\b(?!\d)\w+\b\s*(?=\()/g, function(name) {
+                    code = code.replace(/[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
                         name = name.trim();
                         if ((!functions[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
                             throw "invalid function in `" + line + "`";
@@ -281,7 +291,7 @@
                     
                     /// replace `variable`
                     // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
-                    code = code.replace(/\b(?!\d)\w+\s*(?!\()\b/g, function(l) {
+                    code = code.replace(/[A-z_][A-z0-9_]*\s*(?!\()\b/g, function(l) {
                         let v = variables[l];
                         return v !== undefined ? v : l; // `l` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
                     });
