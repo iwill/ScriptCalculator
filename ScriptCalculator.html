@@ -243,7 +243,7 @@
                 // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript
                 // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
                 let makeRegExp = (regExp, opts) => new RegExp(regExp.raw[0].replace(/\s/mg, ""), opts || "");
-                // ???: `[A-z_][A-z0-9_]*` == `[A-z_][A-z0-9_]*`
+                // `[A-z_][A-z0-9_]*` == `\b(?!\d)\w+\b`
                 let regExp = makeRegExp`
                     ^ \s*
                     (?<name> [A-z_][A-z0-9_]* ) \s*
