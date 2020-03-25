@@ -267,47 +267,46 @@
                     funcArgs = funcMatches.groups.args;
                     code = code.slice(funcMatches.index + funcMatches[0].length).trim();
                 }
-                else {
-                    /// find `variable`
-                    // `(word-start) (no-number) words (word-end) colon`
-                    let variableMatches = code.match(/^[A-z_][A-z0-9_]*\s*\:/);
-                    if (variableMatches) {
-                        variable = variableMatches[0].slice(0, -1).trim();
-                        if (Math[variable]) {
-                            throw "ivalid variable in `" + line + "`";
-                        }
-                        code = code.slice(variableMatches.index + variableMatches[0].length).trim();
+                
+                /// find `variable`
+                // `(word-start) (no-number) words (word-end) colon`
+                let variableMatches = code.match(/^[A-z_][A-z0-9_]*\s*\:/);
+                if (variableMatches) {
+                    variable = variableMatches[0].slice(0, -1).trim();
+                    if (Math[variable]) {
+                        throw "ivalid variable in `" + line + "`";
                     }
-                    
-                    /// validate and insert namespace
-                    // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
-                    code = code.replace(/[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
-                        name = name.trim();
-                        if ((!functions[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
-                            throw "invalid function in `" + line + "`";
-                        }
-                        return functions[name] && !Math[name] ? ("functions." + name) : name;
-                    });
-                    
-                    /// replace `variable`
-                    // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
-                    code = code.replace(/[A-z_][A-z0-9_]*\s*(?!\()\b/g, function(l) {
-                        let v = variables[l];
-                        return v !== undefined ? v : l; // `l` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
-                    });
-                    
-                    /// replace `$x`
-                    /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words)`
-                    if (resultTypes.includes(typeof result[result.length - 1]) && code.length && !code.match(/^[\$\(\w]+/)) {
-                        code = "$ " + code;
-                    }
-                    // `dollar [numbers]`
-                    code = code.replace(/\$\d*/g, function($x) {
-                        if ($x == "$" || $x == "$0") return variables.$;
-                        let i = Number($x.slice(1)) - 1;
-                        return i >= 0 && i < values.length ? values[i] : undefined;
-                    });
+                    code = code.slice(variableMatches.index + variableMatches[0].length).trim();
                 }
+                
+                /// validate and insert namespace
+                // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
+                code = code.replace(/[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
+                    name = name.trim();
+                    if ((!functions[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
+                        throw "invalid function in `" + line + "`";
+                    }
+                    return functions[name] && !Math[name] ? ("functions." + name) : name;
+                });
+                
+                /// replace `variable`
+                // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
+                code = code.replace(/[A-z_][A-z0-9_]*\s*(?!\()\b/g, function(l) {
+                    let v = variables[l];
+                    return v !== undefined ? v : l; // `l` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
+                });
+                
+                /// replace `$x`
+                /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words)`
+                if (resultTypes.includes(typeof result[result.length - 1]) && code.length && !code.match(/^[\$\(\w]+/)) {
+                    code = "$ " + code;
+                }
+                // `dollar [numbers]`
+                code = code.replace(/\$\d*/g, function($x) {
+                    if ($x == "$" || $x == "$0") return variables.$;
+                    let i = Number($x.slice(1)) - 1;
+                    return i >= 0 && i < values.length ? values[i] : undefined;
+                });
                 
                 /// eval
                 with (Math) {
