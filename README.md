@@ -26,7 +26,7 @@ $1 % 2 // 1
 1000000 * tax_rate - tax_qcd // 268080
 
 f(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
-f(10000, 20, 7, tax_rate, tax_qcd) // 951920.0000000001
+f(10000, 45, 7, tax_rate, tax_qcd) // 1914420
 ```
 
 - Math & values
