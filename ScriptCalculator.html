@@ -362,15 +362,14 @@
             
             /// result
             result.push(display || value);
-            comment = comment ? (" " + comment) : "";
             if (resultTypes.includes(typeof value)) {
                 values.push(value);
                 lineNumber.push((values.length < 10 ? " " : "") + values.length);
-                output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + value + comment);
+                output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + value + (comment ? (" " + comment) : ""));
             }
             else {
                 lineNumber.push("");
-                output.push((func || "") + comment);
+                output.push((func || "") + (comment || ""));
             }
         }
         
