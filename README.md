@@ -29,7 +29,7 @@ f(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
 f(10000, 45, 7, tax_rate, tax_qcd) // 1914420
 ```
 
-- Math & values
+- functions & values
 
 ```
 min(max(1, 2), 3) // 2
