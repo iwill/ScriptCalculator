@@ -91,9 +91,9 @@ $              // 32
 
 - reset setting
 
-- // clear source
+- <del>clear source</del>
 
 - copy output
 
-- TODO: share script, settings via link#hash
+- share script and settings via link#hash
 
