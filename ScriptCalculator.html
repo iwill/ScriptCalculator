@@ -316,7 +316,7 @@
                     code = code.slice(0, pctRes.index).trim();
                 }
                 /// input percentage
-                let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*\w)/g;
+                let pcRegExp = /(\d+(\.\d+)?)%(?=\s+)/g;
                 let pcRes = null;
                 while ((pcRes = pcRegExp.exec(code))) {
                     let c = code.slice(0, pcRes.index) + "(" + pcRes[0].replace("%", " / 100") + ")" + code.slice(pcRegExp.lastIndex);

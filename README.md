@@ -5,6 +5,8 @@ ScriptCalculator
 
 - basic: `+`, `-`, `*`, `/`, `%`, `()`
 
+- percent: `%`
+
 - variables: `<last>`, `$`, `$n`
 
 - functions
