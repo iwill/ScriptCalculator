@@ -167,15 +167,6 @@
         }
     }
     
-    function NumberWrapper(number, base) {
-        let prefix = (base == 2) ? "0b" : (base == 8) ? "0o" : (base == 16) ? "0x" : "";
-        this.number = number;
-        this.display = prefix + number.toString(base).toUpperCase();
-    }
-    Math.format = function(number, base) {
-        return new NumberWrapper(number, base);
-    };
-    
     for (let method of ["round", "floor", "ceil"]) {
         let _method = "_" + method;
         Math[_method] = Math[method];
@@ -214,7 +205,7 @@
         // let display = value.toLocaleString();
         /* TODO: lines [{
             result: number / "" / "ERROR",
-            display: formatted-number / "" / "ERROR",
+            display: converted-number / "" / "ERROR",
             lineNumber: number / "",
             output: `code = value // comment`
         }, ...] */
@@ -352,11 +343,6 @@
                     }
                 }
                 console.log(value ? (code + " = " + value) : code);
-                
-                if (value instanceof NumberWrapper) {
-                    display = value.display;
-                    value = value.number;
-                }
                 
                 /// variables
                 let type = typeof value;
