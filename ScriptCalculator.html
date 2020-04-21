@@ -167,13 +167,13 @@
         }
     }
     
-    function Radix(number, radix) {
-        let prefix = (radix == 2) ? "0b" : (radix == 8) ? "0o" : (radix == 16) ? "0x" : "";
+    function NumberWrapper(number, base) {
+        let prefix = (base == 2) ? "0b" : (base == 8) ? "0o" : (base == 16) ? "0x" : "";
         this.number = number;
-        this.display = prefix + number.toString(radix).toUpperCase();
+        this.display = prefix + number.toString(base).toUpperCase();
     }
-    Math.format = function(number, radix) {
-        return new Radix(number, radix);
+    Math.format = function(number, base) {
+        return new NumberWrapper(number, base);
     };
     
     for (let method of ["round", "floor", "ceil"]) {
@@ -225,6 +225,7 @@
             
             let code, func, comment;
             let value, display;
+            let percentage;
             try {
                 if (values.length >= 99) {
                     throw "too many calculations";
@@ -319,6 +320,21 @@
                     return i >= 0 && i < values.length ? values[i] : undefined;
                 });
                 
+                /// replace `%%`
+                let lastIndex = code.search(/\s*%%\s*$/);
+                if (lastIndex >= 0) {
+                    percentage = true;
+                    code = code.slice(0, lastIndex);
+                }
+                /// replace `%`
+                let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*\w)/g;
+                let pcRes = null;
+                while ((pcRes = pcRegExp.exec(code))) {
+                    let c = code.slice(0, pcRes.index) + "(" + pcRes[0].replace("%", " / 100") + ")" + code.slice(pcRegExp.lastIndex);
+                    pcRegExp.lastIndex += (c.length - code.length);
+                    code = c;
+                }
+                
                 /// eval
                 with (Math) {
                     if (funcName && funcArgs) {
@@ -331,7 +347,7 @@
                 }
                 console.log(value ? (code + " = " + value) : code);
                 
-                if (value instanceof Radix) {
+                if (value instanceof NumberWrapper) {
                     display = value.display;
                     value = value.number;
                 }
@@ -346,6 +362,9 @@
                     }
                     variables.$ = value;
                     if (variable) variables[variable] = value;
+                    if (percentage) {
+                        display = value * 100 + "%";
+                    }
                 }
                 else if (type == "boolean") {
                     variables.$ = value;
@@ -432,7 +451,7 @@
             return;
         }
         
-        var key = event.key.toLowerCase();
+        let key = event.key.toLowerCase();
         if (event.ctrlKey && ["c", "u"].includes(key)) {
             let script = $script.value;
             let start = $script.selectionStart, end = $script.selectionEnd;
