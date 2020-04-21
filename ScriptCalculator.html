@@ -333,6 +333,14 @@
                     code = c;
                 }
                 
+                /// convert base of number system
+                let cvtBase = 10;
+                let cvtRes = code.match(/#\d*/);
+                if (cvtRes) {
+                    cvtBase = Number(cvtRes[0].slice(1));
+                    code = code.slice(0, cvtRes.index).trim();
+                }
+                
                 /// eval
                 with (Math) {
                     if (funcName && funcArgs) {
@@ -362,6 +370,10 @@
                     if (variable) variables[variable] = value;
                     if (pctRes) {
                         display = value * 100 + "%";
+                    }
+                    else if (cvtBase != 10) {
+                        let prefix = (cvtBase == 2) ? "0b" : (cvtBase == 8) ? "0o" : (cvtBase == 16) ? "0x" : "";
+                        display = prefix + value.toString(cvtBase).toUpperCase();
                     }
                 }
                 else if (type == "boolean") {
