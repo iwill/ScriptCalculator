@@ -225,7 +225,6 @@
             
             let code, func, comment;
             let value, display;
-            let percentage;
             try {
                 if (values.length >= 99) {
                     throw "too many calculations";
@@ -270,25 +269,25 @@
                     \:
                 `; // `${"img"}`
                 
-                let funcMatches = code.match(regExp);
-                if (funcMatches) {
-                    funcName = funcMatches.groups.name;
+                let funcRes = code.match(regExp);
+                if (funcRes) {
+                    funcName = funcRes.groups.name;
                     if (Math[funcName]) {
                         throw "ivalid func in `" + line + "`";
                     }
-                    funcArgs = funcMatches.groups.args;
-                    code = code.slice(funcMatches.index + funcMatches[0].length).trim();
+                    funcArgs = funcRes.groups.args;
+                    code = code.slice(funcRes.index + funcRes[0].length).trim();
                 }
                 
                 /// find `variable`
                 // `(word-start) (no-number) words (word-end) colon`
-                let variableMatches = code.match(/^[A-z_][A-z0-9_]*\s*\:/);
-                if (variableMatches) {
-                    variable = variableMatches[0].slice(0, -1).trim();
+                let varRes = code.match(/^[A-z_][A-z0-9_]*\s*\:/);
+                if (varRes) {
+                    variable = varRes[0].slice(0, -1).trim();
                     if (Math[variable]) {
                         throw "ivalid variable in `" + line + "`";
                     }
-                    code = code.slice(variableMatches.index + variableMatches[0].length).trim();
+                    code = code.slice(varRes.index + varRes[0].length).trim();
                 }
                 
                 /// validate and insert namespace
@@ -320,13 +319,12 @@
                     return i >= 0 && i < values.length ? values[i] : undefined;
                 });
                 
-                /// replace `%%`
-                let lastIndex = code.search(/\s*%%\s*$/);
-                if (lastIndex >= 0) {
-                    percentage = true;
-                    code = code.slice(0, lastIndex);
+                /// output percentage
+                let pctRes = code.match(/%%\s*$/);
+                if (pctRes) {
+                    code = code.slice(0, pctRes.index).trim();
                 }
-                /// replace `%`
+                /// input percentage
                 let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*\w)/g;
                 let pcRes = null;
                 while ((pcRes = pcRegExp.exec(code))) {
@@ -362,7 +360,7 @@
                     }
                     variables.$ = value;
                     if (variable) variables[variable] = value;
-                    if (percentage) {
+                    if (pctRes) {
                         display = value * 100 + "%";
                     }
                 }
