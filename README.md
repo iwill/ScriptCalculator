@@ -7,9 +7,11 @@ ScriptCalculator
 
 - percentage: `%` if it's NOT followed by `number`, `variable`, `function` or `(`
 
-- variables: `<last>`, `$`, `$n`
+- variables: `<last>`, `$`, `$ln`
 
 - functions
+
+- optional spaces
 
 - comments
 
@@ -22,7 +24,7 @@ ScriptCalculator
 $1 % 2 // 1
 
 10% + 1   // 1.1 : percentage
-10% % 1   // 0.1 : percentage
+10% % 1   // 0.1 : percentage and remainder operation
 10% - 7   // = 0.1 - 7 = 6.9 : percentage
 10 % (-7) // = 10 % 7 = 3 : remainder operation
 ```
@@ -36,7 +38,7 @@ f(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
 f(10000, 45, 7, tax_rate, tax_qcd) // 1914420
 ```
 
-- functions & values
+- builtin functions & values
 
 ```
 min(max(1, 2), 3) // 2
@@ -110,7 +112,7 @@ $      // 32
 
 - copy output
 
-- share script and settings via link#hash
+- share script and settings via url hash
 
 - console log
 
