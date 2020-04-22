@@ -181,7 +181,7 @@
     
     Math.GR = Math.sqrt(1.25) - 0.5; // Golden Ratio
     
-    const resultTypes = ["number", "boolean"];
+    const calcTypes = ["number", "boolean"];
     
     // querySelector || querySelectorAll
     let $script = document.querySelector("#script");
@@ -300,7 +300,8 @@
                 
                 /// replace `$x`
                 /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words)`
-                if (resultTypes.includes(typeof result[result.length - 1]) && code.length && !code.match(/^[\$\(\w]+/)) {
+                let prevRes = result[result.length - 1];
+                if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[\$\(\w]+/)) {
                     code = "$ " + code;
                 }
                 // `dollar [numbers]`
@@ -316,7 +317,7 @@
                     code = code.slice(0, pctRes.index).trim();
                 }
                 /// input percentage
-                let pcRegExp = /(\d+(\.\d+)?)%(?=\s+)/g;
+                let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g;
                 let pcRes = null;
                 while ((pcRes = pcRegExp.exec(code))) {
                     let c = code.slice(0, pcRes.index) + "(" + pcRes[0].replace("%", " / 100") + ")" + code.slice(pcRegExp.lastIndex);
@@ -348,14 +349,20 @@
                 let type = typeof value;
                 if (type == "number") {
                     let decimalDigits = Number($decimalDigits.value);
-                    if (decimalDigits >= 0) {
-                        let roundingMethod = $roundingMethod.value;
-                        value = Math[roundingMethod](value, decimalDigits);
+                    let rounding = decimalDigits < 0 || function(value, decimalDigits) {
+                        return Math[$roundingMethod.value](value, decimalDigits);
+                    };
+                    if (rounding) {
+                        value = rounding(value, decimalDigits);
                     }
                     variables.$ = value;
                     if (variable) variables[variable] = value;
                     if (pctRes) {
-                        display = value * 100 + "%";
+                        let pctValue = value * 100;
+                        if (rounding) {
+                            pctValue = rounding(pctValue, decimalDigits);
+                        }
+                        display = pctValue + "%";
                     }
                     else if (cvtBase != 10) {
                         let prefix = (cvtBase == 2) ? "0b" : (cvtBase == 8) ? "0o" : (cvtBase == 16) ? "0x" : "";
@@ -377,7 +384,7 @@
             
             /// result
             result.push(display || value);
-            if (resultTypes.includes(typeof value)) {
+            if (calcTypes.includes(typeof value)) {
                 values.push(value);
                 lineNumber.push((values.length < 10 ? " " : "") + values.length);
                 output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + value + (comment ? (" " + comment) : ""));
