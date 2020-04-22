@@ -5,7 +5,7 @@ ScriptCalculator
 
 - basic: `+`, `-`, `*`, `/`, `%`, `()`
 
-- percent: `%`
+- percentage: `%` if it's NOT followed by `number`, `variable`, `function` or `(`
 
 - variables: `<last>`, `$`, `$n`
 
@@ -20,6 +20,11 @@ ScriptCalculator
 
 10 / $ // 2
 $1 % 2 // 1
+
+10% + 1   // 1.1 : percentage
+10% % 1   // 0.1 : percentage
+10% - 7   // = 0.1 - 7 = 6.9 : percentage
+10 % (-7) // = 10 % 7 = 3 : remainder operation
 ```
 
 ```
@@ -58,7 +63,15 @@ PI // 3.141592653589793
 GR // 0.6180339887498949
 ```
 
-- radix & format
+- percentage conversion
+
+```
+0.1 %% // 10%
+* 2    // 0.2
+    %% // 20%
+```
+
+- base/radix conversion
 
 ```
 0b10 // 2
@@ -66,12 +79,12 @@ GR // 0.6180339887498949
 10   // 10
 0x10 // 16
 
-32  #2 // 0b100000
-32  #8 // 0o40
-32 #10 // 32
-32 #16 // 0x20
-32 #32 // 10
-32 #36 // W
+32 #2  // 0b100000
+   #8  // 0o40
+   #10 // 32
+   #16 // 0x20
+   #32 // 10
+   #36 // W
 $      // 32
 ```
 
@@ -79,7 +92,7 @@ $      // 32
 
 - line number
 
-- local storage
+- <del>local storage</del>
 
 - change case
 
@@ -98,4 +111,6 @@ $      // 32
 - copy output
 
 - share script and settings via link#hash
+
+- console log
 
