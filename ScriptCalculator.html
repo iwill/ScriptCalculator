@@ -195,10 +195,10 @@
     function calculate() {
         /// prepare
         let script = $script.value
-        .replace(/===/g, "==").replace(/==/g, "=").replace(/=/g, "==") // =, ==, === >> ==
-        .replace(/==\s*\/\//, "//") // before comments
-        .replace(/==\s*\n/, "\n") // before end of line
-        .replace(/==\s*$/, ""); // bofore end of string
+        .replace(/(?<!=)=(?!=)/g, "==") // = to ==
+        .replace(/==\s*\/\//, "//") // == before comments
+        .replace(/==\s*\n/, "\n") // == before end of line
+        .replace(/==\s*$/, ""); // == bofore end of string
         
         // TODO: value.toLocaleString(undefined, {style: "decimal"/"currency"/"percent", currency: "USD"/"EUR"/"CNY", useGrouping: true});
         // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString
