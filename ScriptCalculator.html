@@ -349,7 +349,7 @@
                 let type = typeof value;
                 if (type == "number") {
                     let decimalDigits = Number($decimalDigits.value);
-                    let rounding = decimalDigits < 0 || function(value, decimalDigits) {
+                    let rounding = decimalDigits >= 0 && function(value, decimalDigits) {
                         return Math[$roundingMethod.value](value, decimalDigits);
                     };
                     if (rounding) {
