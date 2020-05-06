@@ -198,7 +198,7 @@
         /// Safari does not support `lookbehind` now
         // .replace(/(?<!=)=(?!=)/g, "==") // = to ==
         // .replace(/(?<!=)==\s*\/\//, "//") // == before comments
-        // .replace(/(?<!=)==\s*?(?=\n), "") // == before end of line
+        // .replace(/(?<!=)==\s*?(?=\n)/, "") // == before end of line
         // .replace(/(?<!=)==\s*$/, ""); // == bofore end of string
         /// #see https://scratch.mit.edu/discuss/topic/34219/?page=1#post-288098
         .replace(/([^=]|^)=(?!=)/g, "$1==") // = to ==
