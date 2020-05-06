@@ -195,10 +195,16 @@
     function calculate() {
         /// prepare
         let script = $script.value
-        .replace(/(?<!=)=(?!=)/g, "==") // = to ==
-        .replace(/==\s*\/\//, "//") // == before comments
-        .replace(/==\s*\n/, "\n") // == before end of line
-        .replace(/==\s*$/, ""); // == bofore end of string
+        /// Safari does not support `lookbehind` now
+        // .replace(/(?<!=)=(?!=)/g, "==") // = to ==
+        // .replace(/(?<!=)==\s*\/\//, "//") // == before comments
+        // .replace(/(?<!=)==\s*?(?=\n), "") // == before end of line
+        // .replace(/(?<!=)==\s*$/, ""); // == bofore end of string
+        /// #see https://scratch.mit.edu/discuss/topic/34219/?page=1#post-288098
+        .replace(/([^=]|^)=(?!=)/g, "$1==") // = to ==
+        .replace(/([^=]|^)==\s*\/\//, "$1//") // == before comments
+        .replace(/([^=]|^)==\s*?(?=\n)/, "$1") // == before end of line
+        .replace(/([^=]|^)==\s*$/, "$1"); // == bofore end of string
         
         // TODO: value.toLocaleString(undefined, {style: "decimal"/"currency"/"percent", currency: "USD"/"EUR"/"CNY", useGrouping: true});
         // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString
