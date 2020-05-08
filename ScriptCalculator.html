@@ -304,17 +304,21 @@
                     return v !== undefined ? v : k; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
                 });
                 
-                /// replace `$x`
-                /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words)`
+                /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
                 let prevRes = result[result.length - 1];
-                if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[\$\(\w]+/)) {
+                if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[\$\(\w👆]+/u)) {
                     code = "$ " + code;
                 }
+                /// replace `$x`
                 // `dollar [numbers]`
                 code = code.replace(/\$\d*/g, function($x) {
                     if ($x == "$" || $x == "$0") return variables.$;
                     let i = Number($x.slice(1)) - 1;
                     return i >= 0 && i < values.length ? values[i] : undefined;
+                });
+                /// replace `👆 [color]`
+                code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
+                    return variables.$;
                 });
                 
                 /// output percentage
