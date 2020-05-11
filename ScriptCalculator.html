@@ -171,10 +171,8 @@
         let _method = "_" + method;
         Math[_method] = Math[method];
         Math[method] = function(number, len) {
-            len = len > 0 ? this._floor(len) : len < 0 ? this._ceil(len) : 0;
             // !!!: `pow` supports negative numbers, but inaccurate
-            let m = this.pow(10, this.abs(len));
-            if (len < 0) m = 1 / m;
+            let m = len < 0 ? 1 / this.pow(10, - this._ceil(len)) : this.pow(10, this._floor(len || 0));
             return this[_method](number * m) / m;
         };
     }
