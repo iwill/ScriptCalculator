@@ -91,6 +91,16 @@ GR // 0.6180339887498949
 $      // 32
 ```
 
+## settings & functions
+
+- DecimalDigits
+
+- RoundingMethod
+
+- reset settings
+
+- copy output
+
 ## features
 
 - line number
@@ -104,14 +114,4 @@ $      // 32
 - serialize script to url hash and deserialize
 
 - console log
-
-## settings & functions
-
-- DecimalDigits
-
-- RoundingMethod
-
-- reset settings
-
-- copy output
 
