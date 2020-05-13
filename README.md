@@ -95,11 +95,15 @@ $      // 32
 
 - line number
 
-- <del>local storage</del>
+- sync scrolling
 
 - change case
 
-- sync scrolling
+- <del>local storage</del>
+
+- serialize script to url hash and deserialize
+
+- console log
 
 ## settings & functions
 
@@ -107,13 +111,7 @@ $      // 32
 
 - RoundingMethod
 
-- reset setting
-
-- <del>clear source</del>
+- reset settings
 
 - copy output
-
-- share script and settings via url hash
-
-- console log
 
