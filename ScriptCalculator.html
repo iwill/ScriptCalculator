@@ -39,6 +39,10 @@
         padding: 0;
     }
     
+    select:disabled {
+        text-decoration: line-through;
+    }
+    
     #right {
         width: var(--right-width);
         margin: 0 0 0 var(--space-l);
@@ -420,6 +424,7 @@
         $decimalPlaces.selectedIndex = hash.decimalPlaces || 0;
         // $fixedPoint.selectedIndex = hash.fixedPoint;
         $roundingMethod.selectedIndex = hash.roundingMethod || 0;
+        $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
         
         $script.value = hash.script || "";
         
@@ -434,7 +439,6 @@
     };
     
     function sthChange(event, target) {
-        $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
         let hash = {};
         if ($decimalPlaces.selectedIndex) {
             hash.decimalPlaces = $decimalPlaces.selectedIndex;
