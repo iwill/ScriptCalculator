@@ -91,7 +91,7 @@ GR // 0.6180339887498949
 $      // 32
 ```
 
-## settings & functions
+## settings
 
 - decimal places
 
