@@ -3,7 +3,7 @@ ScriptCalculator
 
 ## calculation
 
-- basic: `+`, `-`, `*`, `/`, `%`, `()`
+- basic: `+`, `-`, `*`, `/`, `%`， `=`, `(` and `)`
 
 - percentage: `%` if it's NOT followed by `number`, `variable`, `function` or `(`
 
@@ -22,6 +22,7 @@ ScriptCalculator
 
 10 / $ // 2
 $1 % 2 // 1
+   = 1 // true
 
 10% + 1   // = 0.1 + 1 = 1.1 : percentage
 10% % 1   // = 0.1 % 1 = 0.1 : percentage and remainder operation
