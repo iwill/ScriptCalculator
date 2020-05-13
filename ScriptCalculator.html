@@ -171,9 +171,9 @@
         let _method = "_" + method;
         Math[_method] = Math[method];
         Math[method] = function(number, len) {
-            // !!!: `pow` supports negative numbers, but inaccurate
-            let m = len < 0 ? 1 / this.pow(10, - this._ceil(len)) : this.pow(10, this._floor(len || 0));
-            return this[_method](number * m) / m;
+            if (!len) return this[_method](number);
+            let pow = this.pow(10, this._floor(this.abs(len))); // !!!: `pow` supports negative numbers, but inaccurate
+            return len > 0 ? this[_method](number * pow) / pow : this[_method](number / pow) * pow;
         };
     }
     
