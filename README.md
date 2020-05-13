@@ -93,13 +93,13 @@ $      // 32
 
 ## settings & functions
 
-- DecimalDigits
+- decimal places
 
-- RoundingMethod
+- rounding method
 
 - reset settings
 
-- copy output
+- copy outputs
 
 ## features
 

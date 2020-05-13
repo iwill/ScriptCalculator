@@ -116,7 +116,7 @@
             ScriptCalculator by MingLQ [<a href="https://github.com/iwill/ScriptCalculator" target="blank">GitHub</a>]
         </div>
         <div style="position: absolute; right: 0; top: 0; padding: var(--space) 0;">
-            DecimalDigits: <select id="decimalDigits" onchange="sthChange(event, this)">
+            decimal: <select id="decimalPlaces" onchange="sthChange(event, this)">
                 <option value="-1">--</option><option value="0">0</option>
                 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
                 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -132,7 +132,7 @@
                 <option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option>
             </select>
             -->
-            RoundingMethod: <select id="roundingMethod" onchange="sthChange(event, this)">
+            rounding: <select id="roundingMethod" onchange="sthChange(event, this)">
                 <option value="round">round</option><option value="floor">floor</option><option value="ceil">ceil</option>
             </select>
             <button id="reset" onclick="resetSetting(event, this)">reset</button>
@@ -186,7 +186,7 @@
     let $result = document.querySelector("#result");
     let $lineNumber = document.querySelector("#lineNumber");
     let $output = document.querySelector("#output");
-    let $decimalDigits = document.querySelector("#decimalDigits");
+    let $decimalPlaces = document.querySelector("#decimalPlaces");
     // let $fixedPoint = document.querySelector("#fixedPoint");
     let $roundingMethod = document.querySelector("#roundingMethod");
     
@@ -356,19 +356,19 @@
                 /// variables
                 let type = typeof value;
                 if (type == "number") {
-                    let decimalDigits = Number($decimalDigits.value);
-                    let rounding = decimalDigits >= 0 && function(value, decimalDigits) {
-                        return Math[$roundingMethod.value](value, decimalDigits);
+                    let decimalPlaces = Number($decimalPlaces.value);
+                    let rounding = decimalPlaces >= 0 && function(value, decimalPlaces) {
+                        return Math[$roundingMethod.value](value, decimalPlaces);
                     };
                     if (rounding) {
-                        value = rounding(value, decimalDigits);
+                        value = rounding(value, decimalPlaces);
                     }
                     variables.$ = value;
                     if (variable) variables[variable] = value;
                     if (pctRes) {
                         let pctValue = value * 100;
                         if (rounding) {
-                            pctValue = rounding(pctValue, decimalDigits);
+                            pctValue = rounding(pctValue, decimalPlaces);
                         }
                         display = pctValue + "%";
                     }
@@ -417,7 +417,7 @@
             return { script: decodeURIComponent(location.hash.slice(1)) };
         });
         
-        $decimalDigits.selectedIndex = hash.decimalDigits || 0;
+        $decimalPlaces.selectedIndex = hash.decimalPlaces || 0;
         // $fixedPoint.selectedIndex = hash.fixedPoint;
         $roundingMethod.selectedIndex = hash.roundingMethod || 0;
         
@@ -434,10 +434,10 @@
     };
     
     function sthChange(event, target) {
-        $roundingMethod.disabled = ($decimalDigits.selectedIndex == 0);
+        $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
         let hash = {};
-        if ($decimalDigits.selectedIndex) {
-            hash.decimalDigits = $decimalDigits.selectedIndex;
+        if ($decimalPlaces.selectedIndex) {
+            hash.decimalPlaces = $decimalPlaces.selectedIndex;
         }
         if ($roundingMethod.selectedIndex) {
             hash.roundingMethod = $roundingMethod.selectedIndex;
@@ -450,7 +450,7 @@
     }
     
     function resetSetting(event, target) {
-        $decimalDigits.selectedIndex = 0;
+        $decimalPlaces.selectedIndex = 0;
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
         sthChange(null, target);
