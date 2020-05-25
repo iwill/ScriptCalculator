@@ -10,12 +10,10 @@
 <!-- meta name="viewport" content="width=device-width, user-scalable=no" / -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <style type="text/css" media="all">
-    html {
+    :root {
         --margin: 8px;
-        --space-l: var(--margin);
+        --space-l: 8px;
         --space: 5px;
-    }
-    body {
         --top-height: 30px;
         --right-width: 25%;
         --ln-width: 20px;
@@ -416,7 +414,7 @@
         $output.value = output.join("\n");
         
         let lnLength = values.length.toString().length;
-        document.body.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
+        document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
     }
     
     function hashChange(event) {
