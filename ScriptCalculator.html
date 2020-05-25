@@ -318,7 +318,7 @@
                 /// replace `$x`
                 // `dollar [numbers]`
                 code = code.replace(/\$\d*/g, function($x) {
-                    if ($x == "$" || $x == "$0") return variables.$;
+                    if ($x == "$") return variables.$;
                     let i = Number($x.slice(1));
                     return i >= 0 && i < values.length ? values[i] : undefined;
                 });
