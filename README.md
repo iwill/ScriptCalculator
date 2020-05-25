@@ -27,7 +27,7 @@ $0 % 2  //  3 % 2 == 1
 10% + 1 // 0.1 + 1 == 1.1 // percentage
 10% % 1 // 0.1 % 1 == 0.1 // percentage and remainder operation
 10% - 7 // 0.1 - 7 == 6.9 // percentage
-10  % (-7) // 10  % 7 == 3   // remainder operation
+10  % (-7) // 10 % 7 == 3 // remainder operation
 ```
 
 ```
