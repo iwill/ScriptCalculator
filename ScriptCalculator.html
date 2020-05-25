@@ -6,7 +6,9 @@
     Copyright © 2019 MingLQ <minglq.9@gmail.com>. Released under the MIT license.
 -->
 <title>ScriptCalculator by MingLQ</title>
-<meta name="viewport" content="width=device-width, user-scalable=yes" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!-- meta name="viewport" content="width=device-width, user-scalable=no" / -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <style type="text/css" media="all">
     html {
         --margin: 8px;
@@ -225,14 +227,16 @@
             let code, func, comment;
             let value, display;
             try {
-                if (values.length >= 99) {
-                    throw "too many calculations";
-                }
-                
                 /// validate
                 let commentIndex = line.indexOf("//");
                 code = commentIndex >= 0 ? line.slice(0, commentIndex).trim() : line;
                 comment = commentIndex >= 0 ? line.slice(commentIndex).trim() : null;
+                
+                // limit
+                if (values.length >= 1000 && code.length) {
+                    throw "too many calculations";
+                }
+                
                 // symbols
                 if (/[\[\]\{\}'"\\;]/g.test(code)) {
                     throw "invalid symbol in `" + line + "`";
@@ -315,7 +319,7 @@
                 // `dollar [numbers]`
                 code = code.replace(/\$\d*/g, function($x) {
                     if ($x == "$" || $x == "$0") return variables.$;
-                    let i = Number($x.slice(1)) - 1;
+                    let i = Number($x.slice(1));
                     return i >= 0 && i < values.length ? values[i] : undefined;
                 });
                 /// replace `👆 [color]`
@@ -398,7 +402,7 @@
             result.push(display || value);
             if (calcTypes.includes(typeof value)) {
                 values.push(value);
-                lineNumber.push((values.length < 10 ? " " : "") + values.length);
+                lineNumber.push(values.length - 1);
                 output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + value + (comment ? (" " + comment) : ""));
             }
             else {
@@ -412,6 +416,9 @@
         $result.value = result.join("\n");
         $lineNumber.value = lineNumber.join("\n");
         $output.value = output.join("\n");
+        
+        let lnLength = values.length.toString().length;
+        document.body.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
     }
     
     function hashChange(event) {
