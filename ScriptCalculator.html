@@ -316,6 +316,7 @@
                 /// replace `$x`
                 // `dollar [numbers]`
                 code = code.replace(/\$\d*/g, function($x) {
+                    if ($x == "$") return variables.$;
                     return values[Number($x.slice(1))]; // value or undefined
                 });
                 /// replace `👆 [color]`
