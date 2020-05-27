@@ -356,7 +356,6 @@
                         value = eval(code);
                     }
                 }
-                console.log(value ? (code + " = " + value) : code);
                 
                 /// variables
                 let type = typeof value;
@@ -381,6 +380,14 @@
                         let prefix = (cvtBase == 2) ? "0b" : (cvtBase == 8) ? "0o" : (cvtBase == 16) ? "0x" : "";
                         display = prefix + value.toString(cvtBase).toUpperCase();
                     }
+                    else if (value.toString().indexOf("e") > 0) {
+                        if (value > 1) {
+                            display = value.toLocaleString("fullwide", { useGrouping: false });
+                        }
+                        else {
+                            display = value.toFixed(20);
+                        }
+                    }
                 }
                 else if (type == "boolean") {
                     variables.$ = value;
@@ -389,6 +396,8 @@
                 else if (value) {
                     throw "invalid expression in `" + line + "`";
                 }
+                
+                console.log(value ? (code + " = " + (display || value)) : code);
             }
             catch(e) {
                 console.warn(e);
@@ -400,7 +409,7 @@
             if (calcTypes.includes(typeof value)) {
                 values.push(value);
                 lineNumber.push(values.length - 1);
-                output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + value + (comment ? (" " + comment) : ""));
+                output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + (display || value) + (comment ? (" " + comment) : ""));
             }
             else {
                 lineNumber.push("");
