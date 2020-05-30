@@ -37,6 +37,17 @@
         height: calc(100% - var(--margin) * 2);
         margin: var(--margin);
         padding: 0;
+        overflow: hidden;
+    }
+    h1#background {
+        z-index: -1;
+        position: absolute;
+        font-size: 20vh;
+        color: ghostwhite;
+    }
+    h1#title {
+        display: inline-block;
+        margin: 0;
     }
     
     select:disabled {
@@ -100,6 +111,7 @@
         border-style: solid;
         border-width: 1px;
         border-color: gray;
+        background-color: transparent;
         line-height: 15px;
         white-space: pre;
         word-wrap: normal; /* for Safari */
@@ -114,10 +126,11 @@
 </style>
 </head>
 <body>
+    <h1 id="background">Script-<br />Calculator<br />by MingLQ</h1>
     <!-- TODO: overflow: scroll / hide left; -->
     <div style="height: var(--top-height); position: relative; overflow-x: scroll;">
         <div style="position: absolute; left: 0; top: 0; padding: var(--space) 0;">
-            ScriptCalculator by MingLQ [<a href="https://github.com/iwill/ScriptCalculator" target="blank">GitHub</a>]
+            <h1 id="title">ScriptCalculator by MingLQ</h1> [<a href="https://github.com/iwill/ScriptCalculator" target="blank">GitHub</a>]
         </div>
         <div style="position: absolute; right: 0; top: 0; padding: var(--space) 0;">
             decimal: <select id="decimalPlaces" onchange="sthChange(event, this)">
