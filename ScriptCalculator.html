@@ -393,12 +393,19 @@
                         let prefix = (cvtBase == 2) ? "0b" : (cvtBase == 8) ? "0o" : (cvtBase == 16) ? "0x" : "";
                         display = prefix + value.toString(cvtBase).toUpperCase();
                     }
-                    else if (value.toString().indexOf("e") > 0) {
-                        if (value > 1) {
-                            display = value.toLocaleString("fullwide", { useGrouping: false });
+                    else {
+                        let absValue = Math.abs(value);
+                        if (absValue < 1) {
+                            let maxLength = 20; // limited by Number.toFixed()
+                            if (absValue > Math.pow(10, - maxLength) && value.toString().indexOf("e") > 0) {
+                               display = value.toFixed(maxLength);
+                            }
                         }
-                        else {
-                            display = value.toFixed(20);
+                        else if (absValue > 1) {
+                            if (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER) {
+                                display = value.toExponential();
+                            }
+                            // else { display = value.toLocaleString("fullwide", { useGrouping: false }); }
                         }
                     }
                 }
