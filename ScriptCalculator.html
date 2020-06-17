@@ -207,7 +207,9 @@
     // let $fixedPoint = document.querySelector("#fixedPoint");
     let $roundingMethod = document.querySelector("#roundingMethod");
     
-    function calculate() {
+    let changeHashTimeoutID = 0;
+    
+    function calculate() { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         /// prepare
         let script = $script.value
         /// Safari does not support `lookbehind` now
@@ -220,6 +222,9 @@
         .replace(/([^=]|^)==\s*\/\//, "$1//") // == before comments
         .replace(/([^=]|^)==\s*?(?=\n)/, "$1") // == before end of line
         .replace(/([^=]|^)==\s*$/, "$1"); // == bofore end of string
+        
+        let trimmed = script.trim();
+        document.querySelector("title").innerText = trimmed.slice(0, trimmed.indexOf("\n")) || "ScriptCalculator by MingLQ";
         
         // TODO: value.toLocaleString(undefined, {style: "decimal"/"currency"/"percent", currency: "USD"/"EUR"/"CNY", useGrouping: true});
         // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString
@@ -405,7 +410,9 @@
                             if (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER) {
                                 display = value.toExponential();
                             }
-                            // else { display = value.toLocaleString("fullwide", { useGrouping: false }); }
+                            // else if (value.toString().indexOf("e") > 0) {
+                            //     display = value.toLocaleString("fullwide", { useGrouping: false });
+                            // }
                         }
                     }
                 }
@@ -445,25 +452,53 @@
         
         let lnLength = values.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
+        
+        clearTimeout(changeHashTimeoutID);
+        changeHashTimeoutID = setTimeout(function() {
+            changeHash();
+        }, 1000);
+    }
+    
+    function sthChange(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+        calculate();
+    }
+    
+    let jsChangeHash = false;
+    function changeHash() { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+        let json = {};
+        if ($decimalPlaces.selectedIndex) {
+            json.decimalPlaces = $decimalPlaces.selectedIndex;
+        }
+        if ($roundingMethod.selectedIndex) {
+            json.roundingMethod = $roundingMethod.selectedIndex;
+        }
+        if ($script.value) {
+            json.script = $script.value;
+        }
+        let hash = Object.keys(json).length ? ("#" + encodeURIComponent(JSON.stringify(json))) : "";
+        if (location.hash != hash) {
+            jsChangeHash = true;
+            location.replace(hash);
+            // DONOT reset `jsChangeHash` here
+        }
     }
     
     function hashChange(event) {
+        if (jsChangeHash) {
+            jsChangeHash = false;
+            return;
+        }
+        console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         let hash = tryCatch(function() {
             return JSON.parse(decodeURIComponent(location.hash.slice(1)));
         }, function(e) {
             return { script: decodeURIComponent(location.hash.slice(1)) };
         });
-        
         $decimalPlaces.selectedIndex = hash.decimalPlaces || 0;
         // $fixedPoint.selectedIndex = hash.fixedPoint;
         $roundingMethod.selectedIndex = hash.roundingMethod || 0;
         $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
-        
         $script.value = hash.script || "";
-        
-        let trimmed = $script.value.trim();
-        document.querySelector("title").innerText = trimmed.slice(0, trimmed.indexOf("\n")) || "ScriptCalculator by MingLQ";
-        
         calculate();
     }
     
@@ -471,22 +506,7 @@
         hashChange(event);
     };
     
-    function sthChange(event, target) {
-        let hash = {};
-        if ($decimalPlaces.selectedIndex) {
-            hash.decimalPlaces = $decimalPlaces.selectedIndex;
-        }
-        if ($roundingMethod.selectedIndex) {
-            hash.roundingMethod = $roundingMethod.selectedIndex;
-        }
-        if ($script.value) {
-            hash.script = $script.value;
-        }
-        location.replace(Object.keys(hash).length ? ("#" + encodeURIComponent(JSON.stringify(hash))) : "");
-        // donot need call `calculate();`, because `hashChange();` will be triggered
-    }
-    
-    function resetSetting(event, target) {
+    function resetSetting(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         $decimalPlaces.selectedIndex = 0;
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
@@ -494,59 +514,58 @@
     }
     
     function shortcuts(event, target) {
-        if (document.activeElement != $script
-            || event.altKey || event.metaKey || event.repeat || event.isComposing) {
+        if (document.activeElement != $script || event.altKey || event.metaKey || event.repeat || event.isComposing) {
             return;
         }
-        
         let key = event.key.toLowerCase();
-        if (event.ctrlKey && ["c", "u"].includes(key)) {
-            let script = $script.value;
-            let start = $script.selectionStart, end = $script.selectionEnd;
-            if (start == end) {
-                while (start > 0 && script[start - 1].match(/[\w$]/)) {
-                    start -= 1;
-                }
-                while (end < script.length - 1 && script[end].match(/[\w$]/)) {
-                    end += 1;
-                }
-            }
-            
-            let selection = script.substring(start, end);
-            if (key == "c") {
-                selection = selection[0][event.shiftKey ? "toLowerCase" : "toUpperCase"]() + selection.substring(1);
-            }
-            else {
-                selection = selection[event.shiftKey ? "toLowerCase" : "toUpperCase"]();
-            }
-            
-            $script.selectionStart = start;
-            $script.selectionEnd = end;
-            document.execCommand("insertText", false, selection); // enable undo
-            $script.selectionStart = start;
-            $script.selectionEnd = end;
-            
-            sthChange(null, target);
+        if (!event.ctrlKey || !["c", "u"].includes(key)) {
+            return;
         }
+        console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+        
+        let script = $script.value;
+        let start = $script.selectionStart, end = $script.selectionEnd;
+        if (start == end) {
+            while (start > 0 && script[start - 1].match(/[\w$]/)) {
+                start -= 1;
+            }
+            while (end < script.length - 1 && script[end].match(/[\w$]/)) {
+                end += 1;
+            }
+        }
+        
+        let selection = script.substring(start, end);
+        if (key == "c") {
+            selection = selection[0][event.shiftKey ? "toLowerCase" : "toUpperCase"]() + selection.substring(1);
+        }
+        else {
+            selection = selection[event.shiftKey ? "toLowerCase" : "toUpperCase"]();
+        }
+        
+        $script.selectionStart = start;
+        $script.selectionEnd = end;
+        document.execCommand("insertText", false, selection); // enable undo
+        $script.selectionStart = start;
+        $script.selectionEnd = end;
+        
+        sthChange(null, target);
     }
     
-    function copyOutput(event, target) {
+    function copyOutput(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         $output.focus();
         $output.select();
         document.execCommand("copy");
         (target || $script).focus();
     }
     
-    function syncScrolling(event, target) {
+    function syncScrolling(event, target) { // console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         [$script, $result, $lineNumber].forEach(function(e, i) {
             e.scrollTop = target.scrollTop;
         });
     }
     
     hashChange(null);
-    
     $script.focus();
-    calculate();
     
 </script>
 </html>
