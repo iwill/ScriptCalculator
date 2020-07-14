@@ -44,6 +44,10 @@
         position: absolute;
         font-size: 20vh;
         margin-left: 2vw;
+    }
+    h1#background:after { /* disable browser finding by pseudo element */
+        content: "Script-\A Calculator\A by MingLQ";
+        white-space: pre;
         color: ghostwhite;
     }
     h1#title {
@@ -127,7 +131,7 @@
 </style>
 </head>
 <body>
-    <h1 id="background">Script-<br />Calculator<br />by MingLQ</h1>
+    <h1 id="background"></h1>
     <!-- TODO: overflow: scroll / hide left; -->
     <div style="height: var(--top-height); position: relative; overflow-x: scroll;">
         <div style="position: absolute; left: 0; top: 0; padding: var(--space) 0;">
