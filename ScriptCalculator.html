@@ -59,6 +59,19 @@
         text-decoration: line-through;
     }
     
+    /*
+    TODO:
+    1. calculation performance
+    2. prevent find in hidden
+    3. ???: js: eval( value = function() { `let t = 0; for (let i = 1; i <= 12; i++) t += i; return t;` }() );
+    4. ???: ignore trailing + - * / ((( ...
+    n. layout
+    #see http://www.ruanyifeng.com/blog/2020/08/five-css-layouts-in-one-line.html
+    .container {
+        display: grid;
+        grid-template-columns: minmax(150px, 25%) 1fr;
+    }
+     */
     #right {
         width: var(--right-width);
         margin: 0 0 0 var(--space-l);
@@ -199,7 +212,7 @@
         };
     }
     
-    Math.GR = Math.sqrt(1.25) - 0.5; // Golden Ratio
+    Math.GR = Math.sqrt(1.25) - 0.5; // GoldenRatio
     
     const calcTypes = ["number", "boolean"];
     
@@ -212,7 +225,7 @@
     // let $fixedPoint = document.querySelector("#fixedPoint");
     let $roundingMethod = document.querySelector("#roundingMethod");
     
-    let changeHashTimeoutID = 0;
+    let changeHashTimeoutID = 0, sthChangeTimeoutID = 0
     
     function calculate() { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         /// prepare
@@ -248,21 +261,33 @@
             let code, func, comment;
             let value, display;
             try {
-                /// validate
-                let commentIndex = line.indexOf("//");
-                code = commentIndex >= 0 ? line.slice(0, commentIndex).trim() : line;
-                comment = commentIndex >= 0 ? line.slice(commentIndex).trim() : null;
+                code = line.trim();
                 
-                // limit
+                /// comments
+                let commentIndexA = code.indexOf("//"), commentIndexB = (code + " ").indexOf("# ");
+                let commentIndex = (commentIndexA >= 0 && commentIndexB >= 0 ? Math.min(commentIndexA, commentIndexB) : Math.max(commentIndexA, commentIndexB));
+                code = commentIndex >= 0 ? code.slice(0, commentIndex).trim() : code;
+                comment = commentIndex >= 0 ? (code + " ").slice(commentIndex).replace(/^# /, "// ").trim() : null;
+                // let commentIndexRight = code.indexOf("//");
+                // let commentRight = commentIndexRight >= 0 ? code.slice(commentIndexRight).trim() : null;
+                // code = commentIndexRight >= 0 ? code.slice(0, commentIndexRight).trim() : code;
+                // let commentIndexLeft = code.lastIndexOf("\\\\", commentIndexRight >= 0 ? commentIndexRight : code.length - 1);
+                // if (commentIndexLeft >= 0) commentIndexLeft += "\\\\".length;
+                // let commentLeft = commentIndexLeft >= 0 ? "// " + code.slice(0, commentIndexLeft).trim() : null;
+                // code = commentIndexLeft >= 0 ? code.slice(commentIndexLeft).trim() : code;
+                // comment = (commentLeft || commentRight) ? ((commentLeft || "") + (commentRight || "")) : null;
+                
+                /// limit
                 if (values.length >= 1000 && code.length) {
                     throw "too many calculations";
                 }
                 
+                /// validate
                 // symbols
                 if (/[\[\]\{\}'"\\;]/g.test(code)) {
                     throw "invalid symbol in `" + line + "`";
                 }
-                // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis`
+                // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
                 if (/\.\s*[A-z_][A-z0-9_]*\s*\(/g.test(code)) {
                     throw "invalid dot in `" + line + "`";
                 }
@@ -292,7 +317,6 @@
                     ) \s*
                     \:
                 `; // `${"img"}`
-                
                 let funcRes = code.match(regExp);
                 if (funcRes) {
                     funcName = funcRes.groups.name;
@@ -465,7 +489,10 @@
     }
     
     function sthChange(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
-        calculate();
+        clearTimeout(sthChangeTimeoutID);
+        sthChangeTimeoutID = setTimeout(function() {
+            calculate();
+        }, 1000);
     }
     
     let jsChangeHash = false;
