@@ -55,7 +55,7 @@ $0 / 2 //  6 / 2 == 3 // $0 is 6: the result value of the 0th line
    #16 // 0x20
    #32 // 10
    #36 // W
-$      // 32
+ $     // 32
 ```
 
 - bitwise operations
