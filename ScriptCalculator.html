@@ -62,6 +62,9 @@
     select:disabled {
         text-decoration: line-through;
     }
+    input {
+        vertical-align: middle;
+    }
     
     /*
     TODO:
@@ -174,6 +177,7 @@
             rounding: <select id="roundingMethod" onchange="sthChange(event, this)">
                 <option value="round">round</option><option value="floor">floor</option><option value="ceil">ceil</option>
             </select>
+            underline: <input type="checkbox" id="underline" onchange="underlineChange(event, this)" />
             <button id="reset" onclick="resetSetting(event, this)">reset</button>
             |
             <button id="copy" onclick="copyOutput(event, this)">copy</button>
@@ -228,6 +232,7 @@
     let $decimalPlaces = document.querySelector("#decimalPlaces");
     // let $fixedPoint = document.querySelector("#fixedPoint");
     let $roundingMethod = document.querySelector("#roundingMethod");
+    let $underline = document.querySelector("#underline");
     
     let changeHashTimeoutID = 0, sthChangeTimeoutID = 0
     
@@ -507,6 +512,9 @@
         if ($roundingMethod.selectedIndex) {
             json.roundingMethod = $roundingMethod.selectedIndex;
         }
+        if ($underline.checked) {
+            json.underline = true;
+        }
         if ($script.value) {
             json.script = $script.value;
         }
@@ -533,6 +541,8 @@
         // $fixedPoint.selectedIndex = hash.fixedPoint;
         $roundingMethod.selectedIndex = hash.roundingMethod || 0;
         $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
+        $underline.checked = hash.underline;
+        updateStyle();
         $script.value = hash.script || "";
         calculate();
     }
@@ -541,10 +551,23 @@
         hashChange(event);
     };
     
+    function updateStyle() {
+        $script.style.textDecoration = $underline.checked ? "underline" : null;
+    }
+    
+    function underlineChange(event, target) {
+        updateStyle();
+        clearTimeout(changeHashTimeoutID);
+        changeHashTimeoutID = setTimeout(function() {
+            changeHash();
+        }, 1000);
+    }
+    
     function resetSetting(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         $decimalPlaces.selectedIndex = 0;
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
+        $script.style.textDecoration = null;
         sthChange(null, target);
     }
     
