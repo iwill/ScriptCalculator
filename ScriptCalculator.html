@@ -2,10 +2,10 @@
 <html>
 <head>
 <!--
-    Created by MingLQ on 2019-11-22.
-    Copyright © 2019 MingLQ <minglq.9@gmail.com>. Released under the MIT license.
+    Created by Míng on 2019-11-22.
+    Copyright © 2022 Míng <minglq.9@gmail.com>. Released under the MIT license.
 -->
-<title>ScriptCalculator by MingLQ</title>
+<title>ScriptCalculator by Míng</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <!-- meta name="viewport" content="width=device-width, user-scalable=no" / -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -47,7 +47,7 @@
         margin-left: 2vw;
     }
     h1#background:after { /* disable browser finding by pseudo element */
-        content: "Script-\A Calculator\A by MingLQ";
+        content: "Script-\A Calculator\A by Míng";
         white-space: pre;
         color: ghostwhite;
     }
@@ -155,7 +155,7 @@
     <!-- TODO: overflow: scroll / hide left; -->
     <div style="height: var(--top-height); position: relative; overflow-x: scroll;">
         <div style="position: absolute; left: 0; top: 0; padding: var(--space) 0;">
-            <h1 id="title">ScriptCalculator by MingLQ</h1> [<a href="https://github.com/iwill/ScriptCalculator" target="blank">GitHub</a>]
+            <h1 id="title">ScriptCalculator by Míng</h1> [<a href="https://github.com/iwill/ScriptCalculator" target="blank">GitHub</a>]
         </div>
         <div style="position: absolute; right: 0; top: 0; padding: var(--space) 0;">
             decimal: <select id="decimalPlaces" onchange="sthChange(event, this)">
@@ -251,7 +251,7 @@
         .replace(/([^=]|^)==\s*$/, "$1"); // == bofore end of string
         
         let trimmed = script.trim();
-        document.querySelector("title").innerText = trimmed.slice(0, trimmed.indexOf("\n")) || "ScriptCalculator by MingLQ";
+        document.querySelector("title").innerText = trimmed.slice(0, trimmed.indexOf("\n")) || "ScriptCalculator by Míng";
         
         // TODO: value.toLocaleString(undefined, {style: "decimal"/"currency"/"percent", currency: "USD"/"EUR"/"CNY", useGrouping: true});
         // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString
