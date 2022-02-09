@@ -457,7 +457,7 @@
                     throw "invalid expression in `" + line + "`";
                 }
                 
-                console.log(value ? (code + " = " + (display || value)) : code);
+                console.log(value ? (code + " = " + (display || value)) : (code || "<empty-line>"));
             }
             catch(e) {
                 console.warn(e);
@@ -485,17 +485,16 @@
         
         let lnLength = values.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
-        
-        clearTimeout(changeHashTimeoutID);
-        changeHashTimeoutID = setTimeout(function() {
-            changeHash();
-        }, 1000);
     }
     
     function sthChange(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
         clearTimeout(sthChangeTimeoutID);
         sthChangeTimeoutID = setTimeout(function() {
             calculate();
+        }, 1000);
+        clearTimeout(changeHashTimeoutID);
+        changeHashTimeoutID = setTimeout(function() {
+            changeHash();
         }, 1000);
     }
     
