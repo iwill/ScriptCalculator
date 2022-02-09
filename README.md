@@ -5,41 +5,85 @@ ScriptCalculator
 
 - basic: `+`, `-`, `*`, `/`, `%`， `=`, `(` and `)`
 
-- percentage: `%` if it's NOT followed by `number`, `variable`, `function` or `(`
-
 - variables: `<last>`, `$`, `$ln`
-
-- functions
 
 - optional spaces
 
 - comments
 
 ```
- 1 + 2  //  1 + 2 == 3
-   * 3  //  3 * 3 == 9
-   - 4  //  9 - 4 == 5
+ 2 + 4 //  2 + 4 == 6
+   - 3 //  6 - 3 == 3 // 6: the result value of last line
+       // empty line
+   * 4 // ERROR: the last line is empty
 
-10 / $  // 10 / 5 == 2
-$0 % 2  //  3 % 2 == 1
-   = 1  //  1 = 1 == true
-
-10% + 1 // 0.1 + 1 == 1.1 // percentage
-10% % 1 // 0.1 % 1 == 0.1 // percentage and remainder operation
-10% - 7 // 0.1 - 7 == 6.9 // percentage
-10  % (-7) // 10 % 7 == 3 // remainder operation
+$0 / 2 //  6 / 2 == 3 // $0 is 6: the result value of the 0th line
+10 % $ // 10 / 3 == 1 // $  is 3: the result value of the last line
+   = 1 //  1 = 1 == true
 ```
 
-```
-              tax_rate: 0.45 // 0.45
-             tax_qcd: 181920 // 181920
-1000000 * tax_rate - tax_qcd // 268080
+- percentage: `%` if it's NOT followed by `number`, `variable`, `function` or `(`
 
-f(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
-f(10000, 45, 7, tax_rate, tax_qcd) // 1914420
+```
+10%     // 0.1             // percentage
+10 %    // 0.1             // percentage
+10% + 1 // 0.1 + 1 == 1.1  // percentage
+10% % 1 // 0.1 % 1 == 0.1  // percentage and remainder operation
+10% - 7 // 0.1 - 7 == -6.9 // percentage
+10 % (-7) // 10 % 7 == 3   // remainder operation
 ```
 
-- builtin functions & values
+- percentage conversion
+
+```
+0.1 %% // 10%
+* 2    // 0.2
+    %% // 20%
+```
+
+- base/radix conversion
+
+```
+0b10   // 2
+0o10   // 8
+10     // 10
+0x10   // 16
+
+32 #2  // 0b100000
+   #8  // 0o40
+   #10 // 32
+   #16 // 0x20
+   #32 // 10
+   #36 // W
+$      // 32
+```
+
+- bitwise operations
+
+> !!!: [JavaScript Uses 32 bits Bitwise Operands](https://www.w3schools.com/js/js_bitwise.asp#:~:text=JavaScript%20Uses%2032%20bits%20Bitwise%20Operands)
+
+```
+1 <<  0 #2 // 0b1
+1 <<  1 #2 // 0b10
+1 <<  2 #2 // 0b100
+1 <<  3 #2 // 0b1000
+1 <<  4 #2 // 0b10000
+1 <<  5 #2 // 0b100000
+1 <<  6 #2 // 0b1000000
+1 <<  7 #2 // 0b10000000
+1 <<  8 #2 // 0b100000000
+1 <<  9 #2 // 0b1000000000
+1 << 10 #2 // 0b10000000000
+1 << 11 #2 // 0b100000000000
+1 << 12 #2 // 0b1000000000000
+1 << 13 #2 // 0b10000000000000
+1 << 14 #2 // 0b100000000000000
+1 << 15 #2 // 0b1000000000000000
+1 << 16 #2 // 0b10000000000000000
+1 << 32 #2 // 0b1 - JavaScript Uses 32 bits Bitwise Operands
+```
+
+- builtin variables & functions
 
 ```
 min(max(1, 2), 3) // 2
@@ -66,29 +110,25 @@ PI // 3.141592653589793
 GR // 0.6180339887498949
 ```
 
-- percentage conversion
+```
+Number.MAX_SAFE_INTEGER // 9007199254740991
+  == pow(2, 53) - 1 // true
+Number.MIN_SAFE_INTEGER // -9007199254740991
+  == - (pow(2, 53) - 1) // true
+```
+
+- defining variables & functions
+
 
 ```
-0.1 %% // 10%
-* 2    // 0.2
-    %% // 20%
+              tax_rate: 0.45 // 0.45
+             tax_qcd: 181920 // 181920
+1000000 * tax_rate - tax_qcd // 268080
 ```
 
-- base/radix conversion
-
 ```
-0b10   // 2
-0o10   // 8
-10     // 10
-0x10   // 16
-
-32 #2  // 0b100000
-   #8  // 0o40
-   #10 // 32
-   #16 // 0x20
-   #32 // 10
-   #36 // W
-$      // 32
+fun(ads, usd, rmb, rate, qcd): ads * usd * rmb * (1 - rate) + qcd
+fun(10000, 45, 7, tax_rate, tax_qcd) // 1914420
 ```
 
 ## settings
