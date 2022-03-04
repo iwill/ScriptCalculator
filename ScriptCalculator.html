@@ -413,22 +413,24 @@
                     }
                 }
                 
-                /// variables
+                /// value, variables and display
                 let type = typeof value;
                 if (type == "number") {
                     let decimalPlaces = Number($decimalPlaces.value);
-                    let rounding = decimalPlaces >= 0 && function(value, decimalPlaces) {
-                        return Math[$roundingMethod.value](value, decimalPlaces);
+                    let rounding = decimalPlaces >= 0 && function(value, dp) {
+                        return Math[$roundingMethod.value](value, dp);
                     };
                     if (rounding) {
                         value = rounding(value, decimalPlaces);
                     }
+                    
                     variables.$ = value;
                     if (variable) variables[variable] = value;
+                    
                     if (pctRes) {
                         let pctValue = value * 100;
                         if (rounding) {
-                            pctValue = rounding(pctValue, decimalPlaces);
+                            pctValue = rounding(pctValue, decimalPlaces - 2);
                         }
                         display = pctValue + "%";
                     }
