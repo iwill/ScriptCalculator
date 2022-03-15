@@ -562,10 +562,7 @@
     
     function underlineChange(event, target) {
         updateStyle();
-        clearTimeout(changeHashTimeoutID);
-        changeHashTimeoutID = setTimeout(function() {
-            changeHash();
-        }, 1000);
+        changeHash(); // need not timeout
     }
     
     function resetSetting(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
