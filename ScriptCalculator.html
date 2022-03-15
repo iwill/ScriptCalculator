@@ -436,7 +436,10 @@
                     }
                     else if (cvtBase != 10) {
                         let prefix = (cvtBase == 2) ? "0b" : (cvtBase == 8) ? "0o" : (cvtBase == 16) ? "0x" : "";
-                        display = prefix + value.toString(cvtBase).toUpperCase();
+                        display = prefix + Math.abs(value).toString(cvtBase).toUpperCase();
+                        if (value < 0) {
+                            display = "-" + display;
+                        }
                     }
                     else {
                         let absValue = Math.abs(value);
