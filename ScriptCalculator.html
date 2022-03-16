@@ -111,7 +111,7 @@
         border-color: transparent;
         background-clip: padding-box;
         background-color: #00000008;
-        color: #AAAAAA;
+        color: darkgray;
         text-align: right;
     }
     #output { /* cannot copy if display: none; or visibility: hidden; */
@@ -480,7 +480,7 @@
                 output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + (display || value) + (comment ? (" " + comment) : ""));
             }
             else {
-                lineNumber.push("");
+                lineNumber.push("·");
                 output.push((func || "") + (comment || ""));
             }
         }
@@ -493,6 +493,10 @@
         
         let lnLength = values.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
+        
+        $script.value = $script.value.split("\n").map(function(s) {
+            return s.trimLeft(); // keep whitespaces on the right for text-alignment
+        }).join("\n");
     }
     
     function sthChange(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
