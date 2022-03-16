@@ -263,7 +263,7 @@
         let result = [], lineNumber = [], output = [];
         let values = [], variables = {}, functions = {};
         for (line of script.split("\n")) {
-            line = line.trim();
+            // line = line.trim();
             
             let code, func, comment;
             let value, display;
@@ -493,10 +493,6 @@
         
         let lnLength = values.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
-        
-        $script.value = $script.value.split("\n").map(function(s) {
-            return s.trimLeft(); // keep whitespaces on the right for text-alignment
-        }).join("\n");
     }
     
     function sthChange(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
