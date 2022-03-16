@@ -210,6 +210,10 @@
         }
     }
     
+    function debug(arg) {
+        console.debug("debug: " + [arg.callee.caller?.name, arg.callee.name].filter(function(x) { return x; }).join(" > "));
+    }
+    
     for (let method of ["round", "floor", "ceil"]) {
         let _method = "_" + method;
         Math[_method] = Math[method];
@@ -236,7 +240,7 @@
     
     let changeHashTimeoutID = 0, sthChangeTimeoutID = 0
     
-    function calculate() { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+    function calculate() { debug(arguments);
         /// prepare
         let script = $script.value
         /// Safari does not support `lookbehind` now
@@ -265,7 +269,6 @@
         let result = [], lineNumber = [], output = [];
         let values = [], variables = {}, functions = {};
         for (line of script.split("\n")) {
-            // line = line.trim();
             
             let code, func, comment;
             let value, display;
@@ -467,7 +470,7 @@
                     throw "invalid expression in `" + line + "`";
                 }
                 
-                console.log(value ? (code + " = " + (display || value)) : (code || "<empty-line>"));
+                console.log(value ? ([code, "=", (display || value)].join(" ")) : ([code, comment].join(" ").trim() || "<empty-line>"));
             }
             catch(e) {
                 console.warn(e);
@@ -479,7 +482,7 @@
             if (calcTypes.includes(typeof value)) {
                 values.push(value);
                 lineNumber.push(values.length - 1);
-                output.push(code.replace(/\s*functions\.\s*/g, "") + " = " + (display || value) + (comment ? (" " + comment) : ""));
+                output.push([code.replace(/\s*functions\.\s*/g, ""), "=", (display || value), (comment || "")].join(" ").trim());
             }
             else {
                 lineNumber.push("·");
@@ -497,7 +500,7 @@
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
     }
     
-    function sthChange(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+    function sthChange(event, target) { debug(arguments);
         clearTimeout(sthChangeTimeoutID);
         sthChangeTimeoutID = setTimeout(function() {
             calculate();
@@ -509,7 +512,7 @@
     }
     
     let jsChangeHash = false;
-    function changeHash() { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+    function changeHash() { debug(arguments);
         let json = {};
         if ($decimalPlaces.selectedIndex) {
             json.decimalPlaces = $decimalPlaces.selectedIndex;
@@ -536,7 +539,7 @@
             jsChangeHash = false;
             return;
         }
-        console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+        debug(arguments);
         let hash = tryCatch(function() {
             return JSON.parse(decodeURIComponent(location.hash.slice(1)));
         }, function(e) {
@@ -565,7 +568,7 @@
         changeHash(); // need not timeout
     }
     
-    function resetSetting(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+    function resetSetting(event, target) { debug(arguments);
         $decimalPlaces.selectedIndex = 0;
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
@@ -581,7 +584,7 @@
         if (!event.ctrlKey || !["c", "u"].includes(key)) {
             return;
         }
-        console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+        debug(arguments);
         
         let script = $script.value;
         let start = $script.selectionStart, end = $script.selectionEnd;
@@ -611,14 +614,14 @@
         sthChange(null, target);
     }
     
-    function copyOutput(event, target) { console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+    function copyOutput(event, target) { debug(arguments);
         $output.focus();
         $output.select();
         document.execCommand("copy");
         (target || $script).focus();
     }
     
-    function syncScrolling(event, target) { // console.debug((arguments.callee.caller ? arguments.callee.caller.name : "") + ">" + arguments.callee.name);
+    function syncScrolling(event, target) { // debug(arguments);
         [$script, $result, $lineNumber].forEach(function(e, i) {
             e.scrollTop = target.scrollTop;
         });
