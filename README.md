@@ -122,6 +122,11 @@ fun(ads, ads2usd, usd2rmb, rate, qcd): ads * ads2usd * usd2rmb * (1 - rate) + qc
 fun(10000, 45, 7, tax_rate, tax_qcd) // 1914420.0000000002
 ```
 
+```
+add({ a, b }): a + b
+add({ a: 1, b: 2 }) // 3
+```
+
 ## settings
 
 - decimal places
