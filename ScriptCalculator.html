@@ -43,7 +43,7 @@
     h1#background {
         z-index: -1;
         position: absolute;
-        font-size: 20vh;
+        font-size: 16vh;
         margin-left: 2vw;
     }
     h1#background:after { /* disable browser finding by pseudo element */
@@ -333,7 +333,7 @@
                 if (funcRes) {
                     funcName = funcRes.groups.name;
                     if (Math[funcName]) {
-                        throw "ivalid func in `" + line + "`";
+                        throw "invalid function def in `" + line + "`";
                     }
                     funcArgs = funcRes.groups.args;
                     code = code.slice(funcRes.index + funcRes[0].length).trim();
@@ -345,7 +345,7 @@
                 if (varRes) {
                     variable = varRes[0].slice(0, -1).trim();
                     if (Math[variable]) {
-                        throw "ivalid variable in `" + line + "`";
+                        throw "invalid variable def in `" + line + "`";
                     }
                     code = code.slice(varRes.index + varRes[0].length).trim();
                 }
@@ -355,7 +355,7 @@
                 code = code.replace(/[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
                     name = name.trim();
                     if ((!functions[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
-                        throw "invalid function in `" + line + "`";
+                        throw "invalid function call in `" + line + "`";
                     }
                     return functions[name] && !Math[name] ? ("functions." + name) : name;
                 });
@@ -470,7 +470,7 @@
                     throw "invalid expression in `" + line + "`";
                 }
                 
-                console.log(value ? ([code, "=", (display || value)].join(" ")) : ([code, comment].join(" ").trim() || "<empty-line>"));
+                console.log(value ? [code, (display || value)].join(" = ") : ([code, comment].join(" ").trim() || "<empty-line>"));
             }
             catch(e) {
                 console.warn(e);
