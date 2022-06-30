@@ -67,11 +67,26 @@
     }
     
     /*
+    BUG:
+    1. `var`
+    ```
+    a:  1 //  1
+    b: -2 // -1, should be -2
+    ```
+    2. `fun`
+    ```
+    a: 100      // 100
+    f(a): a + 1
+    f(1)        // 101, should be 2
+    ```
+    
     TODO:
+    0. `disable browser finding by pseudo element` for #output
     1. calculation performance
     2. prevent find in hidden
     3. ???: js: eval( value = function() { `let t = 0; for (let i = 1; i <= 12; i++) t += i; return t;` }() );
     4. ???: ignore trailing + - * / ((( ...
+    5. ???: display # comments in the res
     n. layout
     #see http://www.ruanyifeng.com/blog/2020/08/five-css-layouts-in-one-line.html
     .container {
