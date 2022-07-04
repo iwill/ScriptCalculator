@@ -563,7 +563,7 @@
         let hash = Object.keys(json).length ? ("#" + encodeURIComponent(JSON.stringify(json))) : "";
         if (location.hash != hash) {
             jsChangeHash = true;
-            location.replace(hash);
+            location.hash = hash;
             // DONOT reset `jsChangeHash` here
         }
     }
