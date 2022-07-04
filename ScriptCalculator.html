@@ -250,6 +250,7 @@
     let $result = $right.querySelector("#result");
     let $lineNumber = $right.querySelector("#lineNumber");
     let $output = $right.querySelector("#output");
+    $output.remove(); // prevent finding by browser
     
     let $top = document.querySelector("#top");
     let $decimalPlaces = $top.querySelector("#decimalPlaces");
@@ -648,10 +649,12 @@
     }
     
     function copyOutput(event, target) { debug(arguments);
+        $right.appendChild($output)
         $output.focus();
         $output.select();
         document.execCommand("copy");
         (target || $script).focus();
+        $output.remove();
     }
     
     function syncScrolling(event, target) { // debug(arguments);
