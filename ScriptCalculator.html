@@ -283,6 +283,7 @@
         }, ...] */
         let result = [], lineNumber = [], output = [];
         let values = [], variables = {}, functions = {};
+        let tempCode = "";
         for (line of script.split("\n")) {
             
             let code, func, comment;
@@ -307,6 +308,19 @@
                 /// limit
                 if (values.length >= 1000 && code.length) {
                     throw "too many calculations";
+                }
+                
+                /// escape line-break via `\`
+                let hasEsc = code.endsWith("\\");
+                if (hasEsc || tempCode) {
+                    tempCode += code.replace(/\\$/, "\t");
+                    if (hasEsc) {
+                        code = "";
+                    }
+                    else {
+                        code = tempCode;
+                        tempCode = "";
+                    }
                 }
                 
                 /// validate
