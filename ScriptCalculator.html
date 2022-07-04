@@ -73,12 +73,6 @@
     a:  1 //  1
     b: -2 // -1, should be -2
     ```
-    2. `fun`
-    ```
-    a: 100      // 100
-    f(a): a + 1
-    f(1)        // 101, should be 2
-    ```
     
     TODO:
     0. `disable browser finding by pseudo element` for #output
@@ -394,28 +388,31 @@
                     return functions[name] && !Math[name] ? ("functions." + name) : name;
                 });
                 
-                /// replace `variable`
-                // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
-                code = code.replace(/[A-z_][A-z0-9_]*\s*(?!\()\b/g, function(k) {
-                    let v = variables[k];
-                    return v !== undefined ? v : k; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
-                });
-                
-                /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
-                let prevRes = result[result.length - 1];
-                if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
-                    code = "$ " + code;
+                if (!(funcName && funcArgs)) {
+                    /// replace `variable`
+                    // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
+                    code = code.replace(/[A-z_][A-z0-9_]*\s*(?!\()\b/g, function(k) {
+                        let v = variables[k];
+                        return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
+                    });
+                    
+                    /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
+                    let prevRes = result[result.length - 1];
+                    if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
+                        code = "$ " + code;
+                    }
+                    
+                    /// replace `$x`
+                    // `dollar [numbers]`
+                    code = code.replace(/\$\d*/g, function($x) {
+                        if ($x == "$") return variables.$;
+                        return "(" + values[Number($x.slice(1))] + ")"; // value or undefined
+                    });
+                    /// replace `👆 [color]`
+                    code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
+                        return "(" + variables.$ + ")";
+                    });
                 }
-                /// replace `$x`
-                // `dollar [numbers]`
-                code = code.replace(/\$\d*/g, function($x) {
-                    if ($x == "$") return variables.$;
-                    return values[Number($x.slice(1))]; // value or undefined
-                });
-                /// replace `👆 [color]`
-                code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
-                    return variables.$;
-                });
                 
                 /// output percentage
                 let pctRes = code.match(/%%\s*$/);
