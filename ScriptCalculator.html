@@ -68,25 +68,21 @@
     
     /*
     BUG:
-    1. `var`
-    ```
-    a:  1 //  1
-    b: -2 // -1, should be -2
-    ```
     
     TODO:
-    0. `disable browser finding by pseudo element` for #output
-    1. calculation performance
-    2. prevent find in hidden
-    3. ???: js: eval( value = function() { `let t = 0; for (let i = 1; i <= 12; i++) t += i; return t;` }() );
-    4. ???: ignore trailing + - * / ((( ...
-    5. ???: display # comments in the res
-    n. layout
-    #see http://www.ruanyifeng.com/blog/2020/08/five-css-layouts-in-one-line.html
-    .container {
-        display: grid;
-        grid-template-columns: minmax(150px, 25%) 1fr;
-    }
+    - functions:
+        - sum($3, $5) // $3 + $4 + $5
+        - avg([$3, $5]) // ($3 + $5) / 2
+        - sum/avg() // continuous
+    - calculation performance
+    - ???: ignore trailing + - * / ((( ...
+    - layout
+        #see http://www.ruanyifeng.com/blog/2020/08/five-css-layouts-in-one-line.html
+        .container {
+            display: grid;
+            grid-template-columns: minmax(150px, 25%) 1fr;
+        }
+    
      */
     #right {
         width: var(--right-width);
