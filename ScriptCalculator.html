@@ -342,12 +342,12 @@
                 // `[A-z_][A-z0-9_]*` == `\b(?!\d)\w+\b`
                 let regExp = makeRegExp`
                     ^ \s*
-                    (?<name> [A-z_][A-z0-9_]* ) \s*
+                    (?<name> \b[A-z_][A-z0-9_]* ) \s*
                     (?<args>
                         \(\s* \{? \s*
                         (
-                                  [A-z_][A-z0-9_]* \s*
-                            (,\s* [A-z_][A-z0-9_]* \s* )*
+                                  \b[A-z_][A-z0-9_]* \s*
+                            (,\s* \b[A-z_][A-z0-9_]* \s* )*
                         )?
                         \}?\s* \)
                     ) \s*
@@ -365,7 +365,7 @@
                 
                 /// find `variable`
                 // `(word-start) (no-number) words (word-end) colon`
-                let varRes = code.match(/^[A-z_][A-z0-9_]*\s*\:/);
+                let varRes = code.match(/^\b[A-z_][A-z0-9_]*\s*\:/);
                 if (varRes) {
                     variable = varRes[0].slice(0, -1).trim();
                     if (Math[variable]) {
@@ -376,7 +376,7 @@
                 
                 /// validate and insert namespace
                 // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
-                code = code.replace(/[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
+                code = code.replace(/\b[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
                     name = name.trim();
                     if ((!functions[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
                         throw "invalid function call in `" + line + "`";
