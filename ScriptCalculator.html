@@ -386,8 +386,8 @@
                 
                 if (!(funcName && funcArgs)) {
                     /// replace `variable`
-                    // `(word-start) (no-number) words (word-end) [spaces] (no-left-parenthesis)`
-                    code = code.replace(/[A-z_][A-z0-9_]*\s*(?!\()\b/g, function(k) {
+                    // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
+                    code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
                         let v = variables[k];
                         return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
                     });
