@@ -528,6 +528,7 @@
     }
     
     function sthChange(event, target) { debug(arguments);
+        $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
         clearTimeout(sthChangeTimeoutID);
         sthChangeTimeoutID = setTimeout(function() {
             calculate();
@@ -599,7 +600,8 @@
         $decimalPlaces.selectedIndex = 0;
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
-        $script.style.textDecoration = null;
+        $underline.checked = false;
+        updateStyle();
         sthChange(null, target);
     }
     
