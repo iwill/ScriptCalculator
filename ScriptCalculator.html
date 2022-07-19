@@ -65,6 +65,9 @@
     input {
         vertical-align: middle;
     }
+    a {
+        text-underline-position: under;
+    }
     
     .underline {
         text-decoration: underline;
@@ -92,6 +95,12 @@
             display: grid;
             grid-template-columns: minmax(150px, 25%) 1fr;
         }
+    
+    - invalid value
+        fa(a): a
+        fa() // <no-result> - undefined
+        fa(a): a * 1
+        fa() // NaN
     
      */
     #right {
@@ -391,34 +400,32 @@
                     return functions[name] && !Math[name] ? ("functions." + name) : name;
                 });
                 
-                // if (!(funcName && funcArgs)) {
-                    /// replace `variable`
-                    // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
-                    code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
-                        if (funcName && funcArgs) {
-                            return Math[k] || new RegExp("\\b" + k + "\\b").test(funcArgs) ? k : variables[k];
-                        }
-                        let v = variables[k];
-                        return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
-                    });
-                    
-                    /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
-                    let prevRes = result[result.length - 1];
-                    if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
-                        code = "$ " + code;
+                /// replace `variable`
+                // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
+                code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
+                    if (funcName && funcArgs) {
+                        return Math[k] || new RegExp("\\b" + k + "\\b").test(funcArgs) ? k : variables[k];
                     }
-                    
-                    /// replace `$` and `$x`
-                    // `dollar [numbers]`
-                    code = code.replace(/\$\d*/g, function($x) {
-                        if ($x == "$") return variables.$;
-                        return "(" + values[Number($x.slice(1))] + ")"; // value or undefined
-                    });
-                    /// replace `👆 [color]`
-                    code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
-                        return "(" + variables.$ + ")";
-                    });
-                // }
+                    let v = variables[k];
+                    return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
+                });
+                
+                /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
+                let prevRes = result[result.length - 1];
+                if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
+                    code = "$ " + code;
+                }
+                
+                /// replace `$` and `$x`
+                // `dollar [numbers]`
+                code = code.replace(/\$\d*/g, function($x) {
+                    if ($x == "$") return variables.$;
+                    return "(" + values[Number($x.slice(1))] + ")"; // value or undefined
+                });
+                /// replace `👆 [color]`
+                code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
+                    return "(" + variables.$ + ")";
+                });
                 
                 /// output percentage
                 let pctRes = code.match(/%%\s*$/);
