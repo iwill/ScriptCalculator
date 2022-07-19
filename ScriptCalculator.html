@@ -391,10 +391,13 @@
                     return functions[name] && !Math[name] ? ("functions." + name) : name;
                 });
                 
-                if (!(funcName && funcArgs)) {
+                // if (!(funcName && funcArgs)) {
                     /// replace `variable`
                     // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
                     code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
+                        if (funcName && funcArgs) {
+                            return Math[k] || new RegExp("\\b" + k + "\\b").test(funcArgs) ? k : variables[k];
+                        }
                         let v = variables[k];
                         return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
                     });
@@ -415,7 +418,7 @@
                     code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
                         return "(" + variables.$ + ")";
                     });
-                }
+                // }
                 
                 /// output percentage
                 let pctRes = code.match(/%%\s*$/);
