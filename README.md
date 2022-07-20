@@ -112,14 +112,16 @@ round(_666, -2) // 700
 ```
 
 ```
-         1 // 1 | line number: 0
-         2 // 2 | line number: 1
-         3 // 3 | line number: 2
-   $sum(0, 2)   = 6 \ // sum range: 0...2
+1 // 1 | line number: 0
+2 // 2 | line number: 1
+3 // 3 | line number: 2
+
+$sum(0, 2)      = 6 \ // sum range: 0...2
 && $sum(-3, -1) = 6 \ // sum range: -3...-1
 && $sum(0)      = 6 \ // sum range: 0...
 && $sum()       = 6 \ // sum range: 0...
-           // true
+                      // true
+
 $avg(0, 2) // 2
 $min(0, 2) // 1
 $max(0, 2) // 3
