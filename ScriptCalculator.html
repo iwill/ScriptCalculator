@@ -80,7 +80,7 @@
     
     TODO:
     
-    - functions:
+    - funcs:
         - sum($3, $5) // $3 + $4 + $5
         - avg([$3, $5]) // ($3 + $5) / 2
         - sum/avg() // continuous
@@ -268,17 +268,7 @@
     
     function calculate() { debug(arguments);
         /// prepare
-        let script = $script.value
-        /// Safari does not support `lookbehind` now
-        // .replace(/(?<!=)=(?!=)/g, "==") // = to ==
-        // .replace(/(?<!=)==\s*\/\//, "//") // == before comments
-        // .replace(/(?<!=)==\s*?(?=\n)/, "") // == before end of line
-        // .replace(/(?<!=)==\s*$/, ""); // == bofore end of string
-        /// #see https://scratch.mit.edu/discuss/topic/34219/?page=1#post-288098
-        .replace(/([^<=>]|^)=(?!=)/g, "$1==") // = to ==
-        .replace(/([^<=>]|^)==\s*\/\//, "$1//") // == before comments
-        .replace(/([^<=>]|^)==\s*?(?=\n)/, "$1") // == before end of line
-        .replace(/([^<=>]|^)==\s*$/, "$1"); // == bofore end of string
+        let script = $script.value;
         
         let trimmed = script.trim();
         document.querySelector("title").innerText = trimmed.slice(0, trimmed.indexOf("\n")) || "ScriptCalculator by Míng";
@@ -293,9 +283,9 @@
             output: `code = value // comment`
         }, ...] */
         let result = [], lineNumber = [], output = [];
-        let values = [], variables = {}, functions = {};
-        let tempCode = "";
-        for (line of script.split("\n")) {
+        let values = [], vars = {}, funcs = {};
+        let multiLines = "", jsBlock = "";
+        for (let line of script.split("\n")) {
             
             let code, func, comment;
             let value, display;
@@ -321,138 +311,179 @@
                     throw "too many calculations";
                 }
                 
-                /// escape line-break via `\`
-                let hasEsc = code.endsWith("\\");
-                if (hasEsc || tempCode) {
-                    tempCode += code.replace(/\\$/, "\t");
-                    if (hasEsc) {
+                /// js blocks
+                let jsStarts = code.startsWith("```"), jsEnds = code.endsWith("```");
+                let jsCode = false;
+                if (!jsBlock) {
+                    if (jsStarts) {
+                        jsBlock = "(function() {";
+                        code = "";
+                    }
+                    else if (jsEnds) {
+                        throw "invalid symbol in `" + line + "`";
+                    }
+                }
+                else { // if (jsBlock)
+                    if (!jsEnds) {
+                        if (jsStarts) {
+                            throw "invalid symbol in `" + line + "`";
+                        }
+                        jsBlock += code;
                         code = "";
                     }
                     else {
-                        code = tempCode;
-                        tempCode = "";
+                        code = jsBlock + code.replace(/`{3,}$/, "") + "})()";
+                        jsBlock = "";
+                        jsCode = true;
                     }
                 }
                 
-                /// validate
-                // symbols
-                if (/[\[\]'"\\;]/g.test(code)) {
-                    throw "invalid symbol in `" + line + "`";
-                }
-                // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
-                if (/\.\s*[A-z_][A-z0-9_]*\s*\(/g.test(code)) {
-                    throw "invalid dot in `" + line + "`";
-                }
+                let funcName, funcArgs; // define func
+                let variable; // define var
+                let pctRes; // convert to percentage
+                let cvtBase; // convert base
                 
-                let funcName;
-                let funcArgs;
-                let variable;
-                
-                /// find `function`
-                // `fun({?[arg0[, argN]*]?}?):` // supports roro args https://www.tinyblog.dev/blog/2020-07-13-javascript-roro-pattern/
-                // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
-                // tagged templates:
-                // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
-                // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
-                let makeRegExp = (regExp, opts) => new RegExp(regExp.raw[0].replace(/\s/mg, ""), opts || "");
-                // `[A-z_][A-z0-9_]*` == `\b(?!\d)\w+\b`
-                let regExp = makeRegExp`
-                    ^ \s*
-                    (?<name> \b[A-z_][A-z0-9_]* ) \s*
-                    (?<args>
-                        \(\s* \{? \s*
-                        (
-                                  \b[A-z_][A-z0-9_]* \s*
-                            (,\s* \b[A-z_][A-z0-9_]* \s* )*
-                        )?
-                        \}?\s* \)
-                    ) \s*
-                    \:
-                `; // `${"img"}`
-                let funcRes = code.match(regExp);
-                if (funcRes) {
-                    funcName = funcRes.groups.name;
-                    if (Math[funcName]) {
-                        throw "invalid function def in `" + line + "`";
+                if (!jsCode) {
+                    code = code/// Safari does not support `lookbehind` now
+                    // .replace(/(?<!=)=(?!=)/g, "==") // = to ==
+                    // .replace(/(?<!=)==\s*\/\//, "//") // == before comments
+                    // .replace(/(?<!=)==\s*?(?=\n)/, "") // == before end of line
+                    // .replace(/(?<!=)==\s*$/, ""); // == bofore end of string
+                    /// #see https://scratch.mit.edu/discuss/topic/34219/?page=1#post-288098
+                    .replace(/([^<=>]|^)=(?!=)/g, "$1==") // = to ==
+                    .replace(/([^<=>]|^)==\s*\/\//, "$1//") // == before comments
+                    .replace(/([^<=>]|^)==\s*?(?=\n)/, "$1") // == before end of line
+                    .replace(/([^<=>]|^)==\s*$/, "$1"); // == bofore end of string
+                    
+                    /// multiple lines: escape line-break via `\`
+                    let hasEsc = code.endsWith("\\");
+                    if (hasEsc || multiLines) {
+                        multiLines += code.replace(/\\$/, "\t");
+                        if (hasEsc) {
+                            code = "";
+                        }
+                        else {
+                            code = multiLines;
+                            multiLines = "";
+                        }
                     }
-                    funcArgs = funcRes.groups.args;
-                    code = code.slice(funcRes.index + funcRes[0].length).trim();
-                }
-                
-                /// find `variable`
-                // `(word-start) (no-number) words (word-end) colon`
-                let varRes = code.match(/^\b[A-z_][A-z0-9_]*\s*\:/);
-                if (varRes) {
-                    variable = varRes[0].slice(0, -1).trim();
-                    if (Math[variable]) {
-                        throw "invalid variable def in `" + line + "`";
+                    
+                    /// validate
+                    // symbols
+                    if (/[\[\]'"\\;]/g.test(code)) {
+                        throw "invalid symbol in `" + line + "`";
                     }
-                    code = code.slice(varRes.index + varRes[0].length).trim();
-                }
-                
-                /// validate and insert namespace
-                // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
-                code = code.replace(/\b[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
-                    name = name.trim();
-                    if ((!functions[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
-                        throw "invalid function call in `" + line + "`";
+                    // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
+                    if (/\.\s*[A-z_][A-z0-9_]*\s*\(/g.test(code)) {
+                        throw "invalid dot in `" + line + "`";
                     }
-                    return functions[name] && !Math[name] ? ("functions." + name) : name;
-                });
-                
-                /// replace `variable`
-                // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
-                code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
-                    if (funcName && funcArgs) {
-                        return Math[k] || new RegExp("\\b" + k + "\\b").test(funcArgs) ? k : variables[k];
+                    
+                    /// find `function`
+                    // `fun({?[arg0[, argN]*]?}?):` // supports roro args https://www.tinyblog.dev/blog/2020-07-13-javascript-roro-pattern/
+                    // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
+                    // tagged templates:
+                    // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
+                    // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
+                    let makeRegExp = (regExp, opts) => new RegExp(regExp.raw[0].replace(/\s/mg, ""), opts || "");
+                    // `[A-z_][A-z0-9_]*` == `\b(?!\d)\w+\b`
+                    let regExp = makeRegExp`
+                        ^ \s*
+                        (?<name> \b[A-z_][A-z0-9_]* ) \s*
+                        (?<args>
+                            \(\s* \{? \s*
+                            (
+                                      \b[A-z_][A-z0-9_]* \s*
+                                (,\s* \b[A-z_][A-z0-9_]* \s* )*
+                            )?
+                            \}?\s* \)
+                        ) \s*
+                        \:
+                    `; // `${"img"}`
+                    let funcRes = code.match(regExp);
+                    if (funcRes) {
+                        funcName = funcRes.groups.name;
+                        if (Math[funcName]) {
+                            throw "invalid function def in `" + line + "`";
+                        }
+                        funcArgs = funcRes.groups.args;
+                        code = code.slice(funcRes.index + funcRes[0].length).trim();
                     }
-                    let v = variables[k];
-                    return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
-                });
-                
-                /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
-                let prevRes = result[result.length - 1];
-                if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
-                    code = "$ " + code;
-                }
-                
-                /// replace `$` and `$x`
-                // `dollar [numbers]`
-                code = code.replace(/\$\d*/g, function($x) {
-                    if ($x == "$") return variables.$;
-                    return "(" + values[Number($x.slice(1))] + ")"; // value or undefined
-                });
-                /// replace `👆 [color]`
-                code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
-                    return "(" + variables.$ + ")";
-                });
-                
-                /// output percentage
-                let pctRes = code.match(/%%\s*$/);
-                if (pctRes) {
-                    code = code.slice(0, pctRes.index).trim();
-                }
-                /// input percentage
-                let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g;
-                let pcRes = null;
-                while ((pcRes = pcRegExp.exec(code))) {
-                    let c = code.slice(0, pcRes.index) + "(" + pcRes[0].replace("%", " / 100") + ")" + code.slice(pcRegExp.lastIndex);
-                    pcRegExp.lastIndex += (c.length - code.length);
-                    code = c;
-                }
-                
-                /// convert base of number system
-                let cvtBase = 10;
-                let cvtRes = code.match(/#\d*/);
-                if (cvtRes) {
-                    cvtBase = Number(cvtRes[0].slice(1));
-                    code = code.slice(0, cvtRes.index).trim();
+                    
+                    /// find `variable`
+                    // `(word-start) (no-number) words (word-end) colon`
+                    let varRes = code.match(/^\b[A-z_][A-z0-9_]*\s*\:/);
+                    if (varRes) {
+                        variable = varRes[0].slice(0, -1).trim();
+                        if (Math[variable]) {
+                            throw "invalid variable def in `" + line + "`";
+                        }
+                        code = code.slice(varRes.index + varRes[0].length).trim();
+                    }
+                    
+                    /// validate and insert namespace
+                    // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
+                    code = code.replace(/\b[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
+                        name = name.trim();
+                        if ((!funcs[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
+                            throw "invalid function call in `" + line + "`";
+                        }
+                        return funcs[name] && !Math[name] ? ("funcs." + name) : name;
+                    });
+                    
+                    /// replace `variable`
+                    // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
+                    code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
+                        if (funcName && funcArgs) {
+                            return Math[k] || new RegExp("\\b" + k + "\\b").test(funcArgs) ? k : vars[k];
+                        }
+                        let v = vars[k];
+                        return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
+                    });
+                    
+                    /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
+                    let prevRes = result[result.length - 1];
+                    if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
+                        code = "$ " + code;
+                    }
+                    
+                    /// replace `$` and `$x`
+                    // `dollar [numbers]`
+                    code = code.replace(/\$\d*/g, function($x) {
+                        if ($x == "$") return vars.$;
+                        return "(" + values[Number($x.slice(1))] + ")"; // value or undefined
+                    });
+                    /// replace `👆 [color]`
+                    code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
+                        return "(" + vars.$ + ")";
+                    });
+                    
+                    /// output percentage
+                    pctRes = code.match(/%%\s*$/);
+                    if (pctRes) {
+                        code = code.slice(0, pctRes.index).trim();
+                    }
+                    /// input percentage
+                    let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g;
+                    let pcRes = null;
+                    while ((pcRes = pcRegExp.exec(code))) {
+                        let c = code.slice(0, pcRes.index) + "(" + pcRes[0].replace("%", " / 100") + ")" + code.slice(pcRegExp.lastIndex);
+                        pcRegExp.lastIndex += (c.length - code.length);
+                        code = c;
+                    }
+                    
+                    /// convert base of number system
+                    cvtBase = 10;
+                    let cvtRes = code.match(/#\d*/);
+                    if (cvtRes) {
+                        cvtBase = Number(cvtRes[0].slice(1));
+                        code = code.slice(0, cvtRes.index).trim();
+                    }
                 }
                 
                 /// eval
                 with (Math) {
                     if (funcName && funcArgs) {
-                        eval("functions." + funcName + " = " + funcArgs + " => " + code + ";");
+                        eval("funcs." + funcName + " = " + funcArgs + " => " + code + ";");
                         func = funcName + funcArgs + ": " + code;
                     }
                     else {
@@ -471,8 +502,8 @@
                         value = rounding(value, decimalPlaces);
                     }
                     
-                    variables.$ = value;
-                    if (variable) variables[variable] = value;
+                    vars.$ = value;
+                    if (variable) vars[variable] = value;
                     
                     if (pctRes) {
                         let pctValue = value * 100;
@@ -507,8 +538,8 @@
                     }
                 }
                 else if (type == "boolean") {
-                    variables.$ = value;
-                    if (variable) variables[variable] = value;
+                    vars.$ = value;
+                    if (variable) vars[variable] = value;
                 }
                 else if (value) {
                     throw "invalid expression in `" + line + "`";
@@ -517,7 +548,7 @@
                 console.log(value ? [code, (display || value)].join(" = ") : ([code, comment].join(" ").trim() || "<empty-line>"));
             }
             catch(e) {
-                console.log("caught error for code: " + code);
+                console.log("caught error in `" + code + "`");
                 console.warn(e);
                 value = "ERROR";
             }
@@ -527,7 +558,7 @@
             if (calcTypes.includes(typeof value)) {
                 values.push(value);
                 lineNumber.push(values.length - 1);
-                output.push([code.replace(/\s*functions\.\s*/g, ""), "=", (display || value), (comment || "")].join(" ").trim());
+                output.push([code.replace(/\s*funcs\.\s*/g, ""), "=", (display || value), (comment || "")].join(" ").trim());
             }
             else {
                 lineNumber.push("·");
@@ -676,7 +707,7 @@
         });
     }
     
-    if (!location.hash) {
+    if (!location.hash && !location.href.endsWith("#")) {
         location.hash = '#%7B"script"%3A"%23%20ScriptCalculator%5Cn%5Cn%23%23%20Quick%20Start%20%7C%20简单应用%5Cn%5Cn1%20%2B%202%5Cn*%203%5Cn*%2080%25%5Cn%5Cn%23%23%20Result%20Ref%20%7C%20引用结果%5Cn%5Cn10%20-%20%24%5Cn%2F%2F%20Prev%20Result%20%7C%20%24%20是前一个结果，也可以用%20👆🏿%5Cn%5Cn%242%20%2F%202%5Cn%2F%2F%20Nth%20Result%20%7C%20%242%20里的%202%20是右边结果编号%20👉🏿%5Cn%5Cn%23%23%20Variables%20%7C%20变量%5Cn%5Cna%3A%201%5Cnb%3A%202%5Cna%20%2B%20b%5Cn%5Cn%23%23%20Functions%20%7C%20函数%5Cn%5Cnadd\(x%2C%20y\)%3A%20x%20%2B%20y%5Cnadd\(1%2C%202\)%5Cnadd\(3%2C%204\)%5Cn%5Cn%23%23%20More%20%7C%20更多好用的功能介绍看这里%20👇🏿%5Cn%5Cn%2F%2F%20Blog%3A%20https%3A%2F%2Fiwill.im%2F2022%2F07%2F08%2Fscript-calculator%2F%5Cn%2F%2F%20GitHub%3A%20https%3A%2F%2Fgithub.com%2Fiwill%2FScriptCalculator%23readme%5Cn"%7D';
     }
     else {
