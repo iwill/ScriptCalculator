@@ -80,11 +80,6 @@
     
     TODO:
     
-    - funcs:
-        - sum($3, $5) // $3 + $4 + $5
-        - avg([$3, $5]) // ($3 + $5) / 2
-        - sum/avg() // continuous
-    
     - calculation performance
     
     - ???: ignore trailing + - * / ((( ...
@@ -244,6 +239,47 @@
             return len > 0 ? this[_method](number * pow) / pow : this[_method](number / pow) * pow;
         };
     }
+    
+    Math.$sum = function(values, from, till) {
+        let length = values.length;
+        if (from < 0) from = length - 1 + from;
+        if (till < 0) till = length - 1 + till;
+        else if (till === undefined || till >= length) till = length - 1;
+        let sum = 0;
+        for (let i = from; i <= till; i++) {
+            sum += values[i];
+        }
+        return sum;
+    };
+    Math.$avg = function(values, from, till) {
+        let length = values.length;
+        if (from < 0) from = length - 1 + from;
+        if (till < 0) till = length - 1 + till;
+        else if (till === undefined || till >= length) till = length - 1;
+        return this.$sum(values, from, till) / (till - from + 1);
+    };
+    Math.$min = function(values, from, till) {
+        let length = values.length;
+        if (from < 0) from = length - 1 + from;
+        if (till < 0) till = length - 1 + till;
+        else if (till === undefined || till >= length) till = length - 1;
+        let min = values[from];
+        for (let i = from + 1; i <= till; i++) {
+            min = this.min(min, values[i]);
+        }
+        return min;
+    };
+    Math.$max = function(values, from, till) {
+        let length = values.length;
+        if (from < 0) from = length - 1 + from;
+        if (till < 0) till = length - 1 + till;
+        else if (till === undefined || till >= length) till = length - 1;
+        let max = values[from];
+        for (let i = from + 1; i <= till; i++) {
+            max = this.max(max, values[i]);
+        }
+        return max;
+    };
     
     Math.GR = Math.sqrt(1.25) - 0.5; // GoldenRatio
     
@@ -422,12 +458,16 @@
                     
                     /// validate and insert namespace
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
-                    code = code.replace(/\b[A-z_][A-z0-9_]*\s*(?=\()/g, function(name) {
-                        name = name.trim();
+                    code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, function(prefix) {
+                        let name = prefix.slice(0, -1).trim();
                         if ((!funcs[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
                             throw "invalid function call in `" + line + "`";
                         }
-                        return funcs[name] && !Math[name] ? ("funcs." + name) : name;
+                        prefix = (funcs[name] && !Math[name] ? ("funcs." + name) : name) + "(";
+                        if (name.startsWith("$")) { // for `$sum`, ...
+                            prefix += "values, "
+                        }
+                        return prefix;
                     });
                     
                     /// replace `variable`
@@ -447,8 +487,8 @@
                     }
                     
                     /// replace `$` and `$x`
-                    // `dollar [numbers]`
-                    code = code.replace(/\$-?\d*/g, function($x) {
+                    // `dollar [numbers] (no-sum|avg|min|max)`
+                    code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, function($x) {
                         if ($x == "$") return vars.$;
                         let index = Number($x.slice(1));
                         if (index < 0) index = values.length - 1 + index;
