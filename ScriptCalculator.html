@@ -242,8 +242,9 @@
     
     Math.$sum = function(values, from, till) {
         let length = values.length;
-        if (from < 0) from = length - 1 + from;
-        if (till < 0) till = length - 1 + till;
+        if (from < 0) from = length + from;
+        else if (from === undefined) from = 0;
+        if (till < 0) till = length + till;
         else if (till === undefined || till >= length) till = length - 1;
         let sum = 0;
         for (let i = from; i <= till; i++) {
@@ -253,15 +254,17 @@
     };
     Math.$avg = function(values, from, till) {
         let length = values.length;
-        if (from < 0) from = length - 1 + from;
-        if (till < 0) till = length - 1 + till;
+        if (from < 0) from = length + from;
+        else if (from === undefined) from = 0;
+        if (till < 0) till = length + till;
         else if (till === undefined || till >= length) till = length - 1;
         return this.$sum(values, from, till) / (till - from + 1);
     };
     Math.$min = function(values, from, till) {
         let length = values.length;
-        if (from < 0) from = length - 1 + from;
-        if (till < 0) till = length - 1 + till;
+        if (from < 0) from = length + from;
+        else if (from === undefined) from = 0;
+        if (till < 0) till = length + till;
         else if (till === undefined || till >= length) till = length - 1;
         let min = values[from];
         for (let i = from + 1; i <= till; i++) {
@@ -271,8 +274,9 @@
     };
     Math.$max = function(values, from, till) {
         let length = values.length;
-        if (from < 0) from = length - 1 + from;
-        if (till < 0) till = length - 1 + till;
+        if (from < 0) from = length + from;
+        else if (from === undefined) from = 0;
+        if (till < 0) till = length + till;
         else if (till === undefined || till >= length) till = length - 1;
         let max = values[from];
         for (let i = from + 1; i <= till; i++) {
@@ -491,7 +495,7 @@
                     code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, function($x) {
                         if ($x == "$") return vars.$;
                         let index = Number($x.slice(1));
-                        if (index < 0) index = vals.length - 1 + index;
+                        if (index < 0) index = vals.length + index;
                         return "(" + vals[index] + ")"; // value or undefined
                     });
                     /// replace `👆 [color]`
