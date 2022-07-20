@@ -21,9 +21,10 @@ En | [中文](https://iwill.im/2022/07/08/script-calculator/)
        // empty line
    * 4 // ERROR       | the previous line is empty
 
-$0 / 2 //  6 / 2 == 3 | $0 is 6 - the result of the 0th line
+$0 / 2 //  6 / 2 == 3 | $0  is 6 - the result of the 0th line
        // empty line
-10 % $ // 10 / 3 == 1 | $  is 3 - the previous result, not "the result of the previous line"
+10 % $ // 10 / 3 == 1 | $   is 3 - the previous result, not "the result of the previous line"
+   $-2 //        == 3 | $-2 is 3 - the 2nd-to-last result
 ```
 
 - percentage: `%` if it's NOT followed by `number`, `variable`, `function` or `(`
@@ -110,6 +111,20 @@ round(_666, -1) // 670
 round(_666, -2) // 700
 ```
 
+```
+         1 // 1 | line number: 0
+         2 // 2 | line number: 1
+         3 // 3 | line number: 2
+   $sum(0, 2)   = 6 \ // sum range: 0...2
+&& $sum(-3, -1) = 6 \ // sum range: -3...-1
+&& $sum(0)      = 6 \ // sum range: 0...
+&& $sum()       = 6 \ // sum range: 0...
+           // true
+$avg(0, 2) // 2
+$min(0, 2) // 1
+$max(0, 2) // 3
+```
+
 - defining variables & functions
 
 
@@ -129,6 +144,24 @@ add({ a, b }): \
     a + b
 add({ a: 1, b: 2 }) // 3
 ```
+
+- JavaScript blocks
+
+````
+                        ```
+let array = [1, 2, 3];     
+return array.length;        // returns a value
+                        ``` // 3
+````
+
+````
+                      ```js
+return function double(x) { // returns a function with name - MUST HAVE A NAME
+    return x * 2;          
+}                          
+                        ```
+                double(1)  // 2
+````
 
 ## settings
 
