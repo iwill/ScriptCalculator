@@ -384,16 +384,14 @@
                 let cvtBase; // convert base
                 
                 if (!jsCode) {
-                    code = code/// Safari does not support `lookbehind` now
-                    // .replace(/(?<!=)=(?!=)/g, "==") // = to ==
-                    // .replace(/(?<!=)==\s*\/\//, "//") // == before comments
-                    // .replace(/(?<!=)==\s*?(?=\n)/, "") // == before end of line
-                    // .replace(/(?<!=)==\s*$/, ""); // == bofore end of string
+                    code = code
+                    /// Safari does not support `lookbehind` now
                     /// #see https://scratch.mit.edu/discuss/topic/34219/?page=1#post-288098
-                    .replace(/([^<=>]|^)=(?!=)/g, "$1==") // = to ==
-                    .replace(/([^<=>]|^)==\s*\/\//, "$1//") // == before comments
-                    .replace(/([^<=>]|^)==\s*?(?=\n)/, "$1") // == before end of line
-                    .replace(/([^<=>]|^)==\s*$/, "$1"); // == bofore end of string
+                    .replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
+                    // .replace(/(^|[^<!=>])==\s*#/,       "$1#")  // remove single = before #
+                    // .replace(/(^|[^<!=>])==\s*\/\//,    "$1//") // remove single = before //
+                    // .replace(/(^|[^<!=>])==\s*?(?=\n)/, "$1")   // remove single = before \n
+                    // .replace(/(^|[^<!=>])==\s*$/,       "$1");  // remove single = at the end
                     
                     /// multiple lines: escape line-break via `\`
                     let hasEsc = code.endsWith("\\");
