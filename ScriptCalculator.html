@@ -378,20 +378,13 @@
                     }
                 }
                 
-                let funcName, funcArgs; // define func
-                let variable; // define var
-                let pctRes; // convert to percentage
-                let cvtBase; // convert base
+                let funcName, funcArgs;
+                let variable;
+                let pctRes;
+                let cvtBase;
                 
                 if (!jsCode) {
-                    code = code
-                    /// Safari does not support `lookbehind` now
-                    /// #see https://scratch.mit.edu/discuss/topic/34219/?page=1#post-288098
-                    .replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
-                    // .replace(/(^|[^<!=>])==\s*#/,       "$1#")  // remove single = before #
-                    // .replace(/(^|[^<!=>])==\s*\/\//,    "$1//") // remove single = before //
-                    // .replace(/(^|[^<!=>])==\s*?(?=\n)/, "$1")   // remove single = before \n
-                    // .replace(/(^|[^<!=>])==\s*$/,       "$1");  // remove single = at the end
+                    code = code .replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
                     
                     /// multiple lines: escape line-break via `\`
                     let hasEsc = code.endsWith("\\");
