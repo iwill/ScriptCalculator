@@ -455,10 +455,11 @@
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                     code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, function(prefix) {
                         let name = prefix.slice(0, -1).trim();
-                        if ((!funcs[name] && !Math[name]) || ["prototype", "toSource", "valueOf"].includes(name)) {
+                        if ((!Math[name] && !(funcs[name] || name == funcName))
+                            || ["prototype", "toSource", "valueOf"].includes(name)) {
                             throw "invalid function call in `" + line + "`";
                         }
-                        prefix = (funcs[name] && !Math[name] ? ("funcs." + name) : name) + "(";
+                        prefix = (!Math[name] && (funcs[name] || name == funcName) ? ("funcs." + name) : name) + "(";
                         if (name.startsWith("$")) { // for `$sum`, ...
                             prefix += "vals, "
                         }
