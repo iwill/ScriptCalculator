@@ -74,30 +74,6 @@
         text-underline-position: under;
     }
     
-    /*
-    
-    BUG:
-    
-    TODO:
-    
-    - calculation performance
-    
-    - ???: ignore trailing + - * / ((( ...
-    
-    - layout
-        #see http://www.ruanyifeng.com/blog/2020/08/five-css-layouts-in-one-line.html
-        .container {
-            display: grid;
-            grid-template-columns: minmax(150px, 25%) 1fr;
-        }
-    
-    - invalid value
-        fa(a): a
-        fa() // <no-result> - undefined
-        fa(a): a * 1
-        fa() // NaN
-    
-     */
     #right {
         width: var(--right-width);
         margin: 0 0 0 var(--space-l);
@@ -217,6 +193,35 @@
 </body>
 <script type="text/javascript">
     
+    /*
+    
+    BUG:
+    
+    TODO:
+    
+    - focus to line, serialize to json
+    
+    - qr code for sharing
+    
+    - calculation performance
+    
+    - ???: ignore trailing + - * / ((( ...
+    
+    - layout
+        #see http://www.ruanyifeng.com/blog/2020/08/five-css-layouts-in-one-line.html
+        .container {
+            display: grid;
+            grid-template-columns: minmax(150px, 25%) 1fr;
+        }
+    
+    - ???: invalid value
+        fa(a): a
+        fa() // <no-result> - undefined
+        fa(a): a * 1
+        fa() // NaN
+    
+     */
+     
     function tryCatch(f1, f2) {
         try {
             return f1();
@@ -234,7 +239,9 @@
         let _method = "_" + method;
         Math[_method] = Math[method];
         Math[method] = function(number, len) {
-            if (!len) return this[_method](number);
+            if (!len) {
+                return this[_method](number);
+            }
             let pow = this.pow(10, this._floor(this.abs(len))); // !!!: `pow` supports negative numbers, but inaccurate
             return len > 0 ? this[_method](number * pow) / pow : this[_method](number / pow) * pow;
         };
@@ -304,8 +311,6 @@
     let $roundingMethod = $top.querySelector("#roundingMethod");
     let $underline = $top.querySelector("#underline");
     
-    let changeHashTimeoutID = 0, sthChangeTimeoutID = 0
-    
     function calculate() { debug(arguments);
         /// prepare
         let script = $script.value;
@@ -356,6 +361,9 @@
                 let jsCode = false;
                 if (!jsBlock) {
                     if (jsStarts) {
+                        if (multiLines) {
+                            throw "invalid symbol in `" + line + "`";
+                        }
                         jsBlock = "(function() {";
                         code = "";
                     }
@@ -485,9 +493,13 @@
                     /// replace `$` and `$x`
                     // `dollar [numbers] (no-sum|avg|min|max)`
                     code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, function($x) {
-                        if ($x == "$") return vars.$;
+                        if ($x == "$") {
+                            return vars.$;
+                        }
                         let index = Number($x.slice(1));
-                        if (index < 0) index = vals.length + index;
+                        if (index < 0) {
+                            index = vals.length + index;
+                        }
                         return "(" + vals[index] + ")"; // value or undefined
                     });
                     /// replace `👆 [color]`
@@ -541,7 +553,9 @@
                     }
                     
                     vars.$ = value;
-                    if (variable) vars[variable] = value;
+                    if (variable) {
+                        vars[variable] = value;
+                    }
                     
                     if (pctRes) {
                         let pctValue = value * 100;
@@ -577,7 +591,9 @@
                 }
                 else if (type == "boolean") {
                     vars.$ = value;
-                    if (variable) vars[variable] = value;
+                    if (variable) {
+                        vars[variable] = value;
+                    }
                 }
                 else if (type == "function") {
                     if (value.name) {
@@ -624,6 +640,7 @@
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
     }
     
+    let sthChangeTimeoutID = 0, changeHashTimeoutID = 0;
     function sthChange(event, target) { debug(arguments);
         $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
         clearTimeout(sthChangeTimeoutID);
