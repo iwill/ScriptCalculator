@@ -407,6 +407,12 @@
                         }
                     }
                     
+                    /// replace inline js code
+                    // `js` -> eval(js)
+                    code = code.replace(/(?<!`)`.+?`(?!`)/g, function(jsCode) {
+                        return "eval(" + jsCode.slice(1, -1) + ")";
+                    });
+                    
                     /// validate
                     // symbols
                     if (/[\[\]'"\\;]/g.test(code)) {
@@ -441,7 +447,7 @@
                     let funcRes = code.match(regExp);
                     if (funcRes) {
                         funcName = funcRes.groups.name;
-                        if (Math[funcName]) {
+                        if (Math[funcName] || name == "eval") {
                             throw "invalid function def in `" + line + "`";
                         }
                         funcArgs = funcRes.groups.args;
@@ -463,11 +469,11 @@
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                     code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, function(prefix) {
                         let name = prefix.slice(0, -1).trim();
-                        if ((!Math[name] && !(funcs[name] || name == funcName))
+                        if ((!(Math[name] || name == "eval") && !(funcs[name] || name == funcName))
                             || ["prototype", "toSource", "valueOf"].includes(name)) {
                             throw "invalid function call in `" + line + "`";
                         }
-                        prefix = (!Math[name] && (funcs[name] || name == funcName) ? ("funcs." + name) : name) + "(";
+                        prefix = (!(Math[name] || name == "eval") && (funcs[name] || name == funcName) ? ("funcs." + name) : name) + "(";
                         if (name.startsWith("$")) { // for `$sum`, ...
                             prefix += "vals, "
                         }
