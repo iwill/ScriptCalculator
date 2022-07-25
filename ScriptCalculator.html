@@ -331,8 +331,11 @@
         let multiLines = "", jsBlock = "";
         for (let line of script.split("\n")) {
             
-            let code, func, comment;
+            let code, comment;
+            let varName, func, funcName, funcArgs;
+            let resToPercentage, resToBase;
             let value, display;
+            
             try {
                 code = line.trim();
                 
@@ -384,11 +387,6 @@
                         jsCode = true;
                     }
                 }
-                
-                let funcName, funcArgs;
-                let variable;
-                let pctRes;
-                let cvtBase;
                 
                 if (!jsCode) {
                     code = code .replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
@@ -453,12 +451,12 @@
                         code = code.slice(funcRes.index + funcRes[0].length).trim();
                     }
                     
-                    /// find `variable`
+                    /// find `varName`
                     // `(word-start) (no-number) words (word-end) colon`
                     let varRes = code.match(/^\b[A-z_][A-z0-9_]*\s*\:/);
                     if (varRes) {
-                        variable = varRes[0].slice(0, -1).trim();
-                        if (Math[variable]) {
+                        varName = varRes[0].slice(0, -1).trim();
+                        if (Math[varName] || name == "eval") {
                             throw "invalid variable def in `" + line + "`";
                         }
                         code = code.slice(varRes.index + varRes[0].length).trim();
@@ -489,12 +487,6 @@
                         return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
                     });
                     
-                    /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
-                    let prevRes = result[result.length - 1];
-                    if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
-                        code = "$ " + code;
-                    }
-                    
                     /// replace `$` and `$x`
                     // `dollar [numbers] (no-sum|avg|min|max)`
                     code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, function($x) {
@@ -511,11 +503,16 @@
                     code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
                         return "(" + vars.$ + ")";
                     });
+                    /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
+                    let prevRes = result[result.length - 1];
+                    if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
+                        code = "(" + vars.$ + ") " + code;
+                    }
                     
                     /// output percentage
-                    pctRes = code.match(/%%\s*$/);
-                    if (pctRes) {
-                        code = code.slice(0, pctRes.index).trim();
+                    resToPercentage = code.match(/%%\s*$/);
+                    if (resToPercentage) {
+                        code = code.slice(0, resToPercentage.index).trim();
                     }
                     /// input percentage
                     let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g;
@@ -527,11 +524,11 @@
                     }
                     
                     /// convert base of number system
-                    cvtBase = 10;
-                    let cvtRes = code.match(/#\d*/);
-                    if (cvtRes) {
-                        cvtBase = Number(cvtRes[0].slice(1));
-                        code = code.slice(0, cvtRes.index).trim();
+                    resToBase = 10;
+                    let convert = code.match(/#\d*/);
+                    if (convert) {
+                        resToBase = Number(convert[0].slice(1));
+                        code = code.slice(0, convert.index).trim();
                     }
                 }
                 
@@ -557,21 +554,16 @@
                         value = rounding(value, decimalPlaces);
                     }
                     
-                    vars.$ = value;
-                    if (variable) {
-                        vars[variable] = value;
-                    }
-                    
-                    if (pctRes) {
+                    if (resToPercentage) {
                         let pctValue = value * 100;
                         if (rounding) {
                             pctValue = rounding(pctValue, decimalPlaces - 2);
                         }
                         display = pctValue + "%";
                     }
-                    else if (cvtBase != 10) {
-                        let prefix = (cvtBase == 2) ? "0b" : (cvtBase == 8) ? "0o" : (cvtBase == 16) ? "0x" : "";
-                        display = prefix + Math.abs(value).toString(cvtBase).toUpperCase();
+                    else if (resToBase != 10) {
+                        let prefix = (resToBase == 2) ? "0b" : (resToBase == 8) ? "0o" : (resToBase == 16) ? "0x" : "";
+                        display = prefix + Math.abs(value).toString(resToBase).toUpperCase();
                         if (value < 0) {
                             display = "-" + display;
                         }
@@ -595,10 +587,7 @@
                     }
                 }
                 else if (type == "boolean") {
-                    vars.$ = value;
-                    if (variable) {
-                        vars[variable] = value;
-                    }
+                    // nothing to do
                 }
                 else if (type == "function") {
                     if (value.name) {
@@ -626,6 +615,10 @@
             result.push(display || value);
             if (calcTypes.includes(typeof value)) {
                 vals.push(value);
+                vars.$ = value;
+                if (varName) {
+                    vars[varName] = value;
+                }
                 lineNumber.push(vals.length - 1);
                 output.push([code.replace(/\s*funcs\.\s*/g, ""), "=", (display || value), (comment || "")].join(" ").trim());
             }
