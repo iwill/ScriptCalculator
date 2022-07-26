@@ -219,20 +219,16 @@
         fa(a): a * 1
         fa() // NaN
     
+    NOTE:
+    
+    - RexExp:
+        #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Cheatsheet
+        x(?=y)  // lookahead assertion
+        x(?!y)  // negative lookahead assertion
+         (?<=y)x // lookbehind assertion
+         (?<!y)x // negative lookbehind assertion
+    
      */
-    
-    function tryCatch(f1, f2) {
-        try {
-            return f1();
-        }
-        catch (e) {
-            return f2(e);
-        }
-    }
-    
-    function debug(arg) {
-        console.debug("debug: " + [arg.callee.caller?.name, arg.callee.name].filter(function(x) { return x; }).join(" > "));
-    }
     
     for (let method of ["round", "floor", "ceil"]) {
         let _method = "_" + method;
@@ -293,7 +289,22 @@
     
     Math.GR = Math.sqrt(1.25) - 0.5; // GoldenRatio
     
-    const calcTypes = ["number", "boolean"];
+    function tryCatch(f1, f2) {
+        try {
+            return f1();
+        }
+        catch (e) {
+            return f2(e);
+        }
+    }
+    
+    function debug(arg) {
+        console.debug("debug: " + [arg.callee.caller?.name, arg.callee.name].filter(function(x) { return x; }).join(" > "));
+    }
+    
+    function validScopes(name) {
+        return Math[name] || globalThis[name];
+    }
     
     let $left = document.querySelector("#left");
     let $script = $left.querySelector("#script");
@@ -332,7 +343,7 @@
         for (let line of script.split("\n")) {
             
             let code, comment;
-            let varName, func, funcName, funcArgs;
+            let varName, funcName, funcArgs;
             let resToPercentage, resToBase;
             let value, display;
             
@@ -340,18 +351,24 @@
                 code = line.trim();
                 
                 /// comments
-                let commentIndexA = code.indexOf("//"), commentIndexB = (code + " ").indexOf("# ");
-                let commentIndex = (commentIndexA >= 0 && commentIndexB >= 0 ? Math.min(commentIndexA, commentIndexB) : Math.max(commentIndexA, commentIndexB));
-                comment = commentIndex >= 0 ? (code + " ").slice(commentIndex).replace(/^# /, "// ").trim() : null;
-                code = commentIndex >= 0 ? code.slice(0, commentIndex).trim() : code;
-                // let commentIndexRight = code.indexOf("//");
-                // let commentRight = commentIndexRight >= 0 ? code.slice(commentIndexRight).trim() : null;
-                // code = commentIndexRight >= 0 ? code.slice(0, commentIndexRight).trim() : code;
-                // let commentIndexLeft = code.lastIndexOf("\\\\", commentIndexRight >= 0 ? commentIndexRight : code.length - 1);
-                // if (commentIndexLeft >= 0) commentIndexLeft += "\\\\".length;
-                // let commentLeft = commentIndexLeft >= 0 ? "// " + code.slice(0, commentIndexLeft).trim() : null;
-                // code = commentIndexLeft >= 0 ? code.slice(commentIndexLeft).trim() : code;
-                // comment = (commentLeft || commentRight) ? ((commentLeft || "") + (commentRight || "")) : null;
+                let commentIndices = [code.indexOf("//"), (function() {
+                    let commentMatches = [...code.matchAll(/#+\d*\s*/g)];
+                    if (commentMatches.length) {
+                        let match = commentMatches[0];
+                        if (!/#\d+/.test(match[0])) {
+                            return match.index;
+                        }
+                        else if ((match = commentMatches[1])) {
+                            return match.index;
+                        }
+                    }
+                    return -1;
+                })()].filter((x) => x >= 0);
+                let commentIndex = Math.min(...commentIndices);
+                if (commentIndex != Infinity) {
+                    comment = code.slice(commentIndex).trim();
+                    code = code.slice(0, commentIndex).trim();
+                }
                 
                 /// limit
                 if (vals.length >= 1000 && code.length) {
@@ -364,19 +381,19 @@
                 if (!jsBlock) {
                     if (jsStarts) {
                         if (multiLines) {
-                            throw "invalid symbol in `" + line + "`";
+                            throw `invalid symbol in \`${line}\``;
                         }
                         jsBlock = "(function() {";
                         code = "";
                     }
                     else if (jsEnds) {
-                        throw "invalid symbol in `" + line + "`";
+                        throw `invalid symbol in \`${line}\``;
                     }
                 }
                 else { // if (jsBlock)
                     if (!jsEnds) {
                         if (jsStarts) {
-                            throw "invalid symbol in `" + line + "`";
+                            throw `invalid symbol in \`${line}\``;
                         }
                         jsBlock += code;
                         code = "";
@@ -391,7 +408,7 @@
                 if (!jsCode) {
                     code = code .replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
                     
-                    /// multiple lines: escape line-break via `\`
+                    /// multiple lines: escape line-break by `\`
                     let hasEsc = code.endsWith("\\");
                     if (hasEsc || multiLines) {
                         multiLines += code.replace(/\\$/, "\t");
@@ -404,23 +421,23 @@
                         }
                     }
                     
-                    /// replace inline js code
+                    /// inline js code
                     // `js` -> eval(js)
                     code = code.replace(/(?<!`)`.+?`(?!`)/g, function(jsCode) {
-                        return "eval(" + jsCode.slice(1, -1) + ")";
+                        return `eval(${jsCode.slice(1, -1)})`;
                     });
                     
                     /// validate
                     // symbols
                     if (/[\[\]'"\\;]/g.test(code)) {
-                        throw "invalid symbol in `" + line + "`";
+                        throw `invalid symbol in \`${line}\``;
                     }
                     // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
                     if (/\.\s*[A-z_][A-z0-9_]*\s*\(/g.test(code)) {
-                        throw "invalid dot in `" + line + "`";
+                        throw `invalid dot in \`${line}\``;
                     }
                     
-                    /// find `function`
+                    /// find functions
                     // `fun({?[arg0[, argN]*]?}?):` // supports roro args https://www.tinyblog.dev/blog/2020-07-13-javascript-roro-pattern/
                     // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
                     // tagged templates:
@@ -440,54 +457,55 @@
                             \}?\s* \)
                         ) \s*
                         \:
-                    `; // `${"img"}`
+                    ${""/* "img" */}`;
                     let funcRes = code.match(regExp);
                     if (funcRes) {
                         funcName = funcRes.groups.name;
-                        if (Math[funcName] || name == "eval") {
-                            throw "invalid function def in `" + line + "`";
+                        if (validScopes(funcName)) {
+                            throw `invalid function def in \`${line}\``;
                         }
                         funcArgs = funcRes.groups.args;
                         code = code.slice(funcRes.index + funcRes[0].length).trim();
                     }
                     
-                    /// find `varName`
+                    /// find variables
                     // `(word-start) (no-number) words (word-end) colon`
                     let varRes = code.match(/^\b[A-z_][A-z0-9_]*\s*\:/);
                     if (varRes) {
                         varName = varRes[0].slice(0, -1).trim();
-                        if (Math[varName] || name == "eval") {
-                            throw "invalid variable def in `" + line + "`";
+                        if (validScopes(varName)) {
+                            throw `invalid variable def in \`${line}\``;
                         }
                         code = code.slice(varRes.index + varRes[0].length).trim();
                     }
                     
-                    /// validate and insert namespace
+                    /// validate functions and insert namespaces
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                     code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, function(prefix) {
                         let name = prefix.slice(0, -1).trim();
-                        if ((!(Math[name] || name == "eval") && !(funcs[name] || name == funcName))
-                            || ["prototype", "toSource", "valueOf"].includes(name)) {
-                            throw "invalid function call in `" + line + "`";
+                        if (!(validScopes(name) || funcs[name] || name == funcName)
+                            || ["constructor", "prototype", "toSource", "valueOf"].includes(name)) {
+                            throw `invalid function call in \`${line}\``;
                         }
-                        prefix = (!(Math[name] || name == "eval") && (funcs[name] || name == funcName) ? ("funcs." + name) : name) + "(";
+                        prefix = validScopes(name) ? name : ("funcs." + name);
+                        prefix += "(";
                         if (name.startsWith("$")) { // for `$sum`, ...
                             prefix += "vals, "
                         }
                         return prefix;
                     });
                     
-                    /// replace `variable`
+                    /// replace variables with values
                     // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
                     code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
-                        if (funcName && funcArgs) {
-                            return Math[k] || new RegExp("\\b" + k + "\\b").test(funcArgs) ? k : vars[k];
+                        if (funcName && funcArgs && new RegExp(`\\b${k}\\b`).test(funcArgs)) {
+                            return k;
                         }
-                        let v = vars[k];
-                        return "(" + (v !== undefined ? v : k) + ")"; // `k` but NOT undefined for PI, NaN, MIN_VALUE, MAX_VALUE, ...
+                        let v = validScopes(k) || vars[k];
+                        return `(${v !== undefined ? v : k})`;
                     });
                     
-                    /// replace `$` and `$x`
+                    /// replace `$` and `$x` with values
                     // `dollar [numbers] (no-sum|avg|min|max)`
                     code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, function($x) {
                         if ($x == "$") {
@@ -497,16 +515,16 @@
                         if (index < 0) {
                             index = vals.length + index;
                         }
-                        return "(" + vals[index] + ")"; // value or undefined
+                        return `(${vals[index]})`; // value or undefined
                     });
-                    /// replace `👆 [color]`
+                    /// <👆🏿-use>: replace `👆 [color]` with values
                     code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
-                        return "(" + vars.$ + ")";
+                        return `(${vars.$})`;
                     });
                     /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
-                    let prevRes = result[result.length - 1];
+                    let prevRes = result[result.length - 1]; // if prev line has res, then prepend prev value - vars.$
                     if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
-                        code = "(" + vars.$ + ") " + code;
+                        code = `(${vars.$}) ${code}`;
                     }
                     
                     /// output percentage
@@ -515,17 +533,13 @@
                         code = code.slice(0, resToPercentage.index).trim();
                     }
                     /// input percentage
-                    let pcRegExp = /(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g;
-                    let pcRes = null;
-                    while ((pcRes = pcRegExp.exec(code))) {
-                        let c = code.slice(0, pcRes.index) + "(" + pcRes[0].replace("%", " / 100") + ")" + code.slice(pcRegExp.lastIndex);
-                        pcRegExp.lastIndex += (c.length - code.length);
-                        code = c;
-                    }
+                    code = code.replace(/(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g, function(pct) {
+                        return `(${pct.replace(/\s*%/, "")} / 100)`;
+                    });
                     
                     /// convert base of number system
                     resToBase = 10;
-                    let convert = code.match(/#\d*/);
+                    let convert = code.match(/#\d+\s*$/);
                     if (convert) {
                         resToBase = Number(convert[0].slice(1));
                         code = code.slice(0, convert.index).trim();
@@ -535,8 +549,7 @@
                 /// eval
                 with (Math) {
                     if (funcName && funcArgs) {
-                        eval("funcs." + funcName + " = " + funcArgs + " => " + code + ";");
-                        func = funcName + funcArgs + ": " + code;
+                        eval(`funcs.${funcName} = ${funcArgs} => ${code};`);
                     }
                     else {
                         value = eval(code);
@@ -596,35 +609,35 @@
                     }
                     else {
                         value = undefined;
-                        throw "invalid JavaScript block at `" + line + "`";
+                        throw `invalid JavaScript block at \`${line}\``;
                     }
                 }
                 else if (value) {
-                    throw "invalid expression in `" + line + "`";
+                    throw `invalid expression in \`${line}\``;
                 }
                 
-                console.log(value ? [code, (display || value)].join(" = ") : ([code, comment].join(" ").trim() || "<empty-line>"));
+                console.log(value ? `${code} = ${display || value}` : (`${code} ${comment || ""}`.trim() || "<empty-line>"));
             }
             catch(e) {
-                console.log("caught error in `" + code + "`");
+                console.log(`caught error in \`${code}\``);
                 console.warn(e);
                 value = "ERROR";
             }
             
             /// result
             result.push(display || value);
-            if (calcTypes.includes(typeof value)) {
+            if (["number", "boolean"].includes(typeof value)) {
                 vals.push(value);
                 vars.$ = value;
                 if (varName) {
                     vars[varName] = value;
                 }
                 lineNumber.push(vals.length - 1);
-                output.push([code.replace(/\s*funcs\.\s*/g, ""), "=", (display || value), (comment || "")].join(" ").trim());
+                output.push(`${code.replace(/\s*funcs\.\s*/g, "")} = ${display || value} ${comment || ""}`.trim());
             }
             else {
                 lineNumber.push("·");
-                output.push((func || "") + (comment || ""));
+                output.push(funcName && funcArgs ? `${funcName}${funcArgs}: ${code} ${comment || ""}`.trim() : comment);
             }
         }
         
@@ -667,7 +680,7 @@
                 end: $script.selectionEnd
             };
         }
-        let hash = Object.keys(json).length ? ("#" + encodeURIComponent(JSON.stringify(json))) : "";
+        let hash = Object.keys(json).length ? encodeURIComponent(JSON.stringify(json)) : "";
         if (location.hash != hash) {
             jsSerializeToHash = true;
             location.hash = hash;
