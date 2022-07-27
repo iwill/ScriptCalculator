@@ -298,8 +298,20 @@
         }
     }
     
-    function debug(arg) {
-        console.debug("debug: " + [arg.callee.caller?.name, arg.callee.name].filter(function(x) { return x; }).join(" > "));
+    function debugGroup(label, fn) {
+        label = label.replace(/%/g, "%%");
+        if (fn) {
+            console.group(label);
+            console.time(label);
+            fn();
+            console.timeEnd(label);
+            console.groupEnd(label);
+        }
+    }
+    
+    function debugFunc(args, fn) {
+        console.debug("func: " + [args.callee.caller?.name, args.callee.name].filter(function(x) { return x; }).join(" > "));
+        debugGroup(args.callee.name, fn);
     }
     
     function validScopes(name) {
@@ -321,7 +333,8 @@
     let $roundingMethod = $top.querySelector("#roundingMethod");
     let $underline = $top.querySelector("#underline");
     
-    function calculate() { debug(arguments);
+    function calculate() { debugFunc(arguments, function() {
+        
         /// prepare
         let script = $script.value;
         
@@ -340,7 +353,8 @@
         let result = [], lineNumber = [], output = [];
         let vals = [], vars = {}, funcs = {};
         let multiLines = "", jsBlock = "";
-        for (let line of script.split("\n")) {
+        let lines = script.split("\n");
+        for (let ln = 0; ln < lines.length; ln++) { let line = lines[ln]; debugGroup(`#${ln} \`${line}\``, function() {
             
             let code, comment;
             let varName, funcName, funcArgs;
@@ -429,7 +443,7 @@
                     
                     /// validate
                     // symbols
-                    if (/[\[\]'"\\;]/g.test(code)) {
+                    if (/[\[\]{}'"\\;]/g.test(code)) {
                         throw `invalid symbol in \`${line}\``;
                     }
                     // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
@@ -530,7 +544,7 @@
                     });
                     /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
                     let prevRes = result[result.length - 1]; // if prev line has res, then prepend prev value - vars.$
-                    if ((prevRes || prevRes === 0 || prevRes === false) && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
+                    if ((prevRes || prevRes === 0 || prevRes === false) && prevRes != "ERROR" && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
                         code = `(${vars.$}) ${code}`;
                     }
                     
@@ -555,9 +569,12 @@
                 /// eval
                 with (Math) {
                     if (funcName && funcArgs) {
-                        eval(`funcs.${funcName} = ${funcArgs} => ${code};`);
+                        let js = `${funcArgs} => ${code};`;
+                        console.log(`eval: ${funcName} = ${js}`.replace(/%/g, "%%"));
+                        funcs[funcName] = eval(js);
                     }
                     else {
+                        console.log(`eval: ${(varName || "") && varName + " = "}${code}`.replace(/%/g, "%%"));
                         value = eval(code);
                     }
                 }
@@ -607,7 +624,7 @@
                 }
                 else {
                     if (resToPercentage || resToBase) {
-                        throw `invalid expression in \`${line}\``;
+                        throw `invalid conversion in \`${line}\``;
                     }
                     
                     if (type == "boolean") {
@@ -615,7 +632,7 @@
                     }
                     else {
                         if (varName) {
-                            throw `invalid expression in \`${line}\``;
+                            throw `invalid variable in \`${line}\``;
                         }
                         
                         if (type == "function") {
@@ -629,16 +646,16 @@
                             }
                         }
                         else if (value) {
-                            throw `invalid expression in \`${line}\``;
+                            throw `invalid result in \`${line}\``;
                         }
                     }
                 }
                 
-                console.log(value ? `${code} = ${display || value}` : (`${code} ${comment || ""}`.trim() || "<empty-line>"));
+                let log = value ? `${code} = ${display || value}` : (`${code} ${comment || ""}`.trim() || "<empty-line>");
+                console.log("res: " + log.replace(/%/g, "%%"));
             }
             catch(e) {
-                console.log(`caught error in \`${code}\``);
-                console.warn(e);
+                console.warn((e + "").replace(/%/g, "%%"));
                 value = "ERROR";
             }
             
@@ -657,7 +674,7 @@
                 lineNumber.push("·");
                 output.push(funcName && funcArgs ? `${funcName}${funcArgs}: ${code} ${comment || ""}`.trim() : comment);
             }
-        }
+        });}
         
         /// output
         // let fixed = result.map((name, index) => name ? Number(name).toFixed(2) : name);
@@ -667,10 +684,10 @@
         
         let lnLength = vals.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
-    }
+    });}
     
     let sthChangedTimeoutID = 0;
-    this.sthChanged = function(event, target) { debug(arguments);
+    this.sthChanged = function sthChanged(event, target) { debugFunc(arguments);
         $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
         clearTimeout(sthChangedTimeoutID);
         sthChangedTimeoutID = setTimeout(function() {
@@ -680,7 +697,7 @@
     };
     
     let jsSerializeToHash = false;
-    function serializeToHash() { debug(arguments);
+    function serializeToHash() { debugFunc(arguments, function() {
         let json = {};
         if ($decimalPlaces.selectedIndex) {
             json.decimalPlaces = $decimalPlaces.selectedIndex;
@@ -704,35 +721,36 @@
             location.hash = hash;
             // DONOT reset `jsSerializeToHash` here
         }
-    }
+    });}
     
     function updateWithHashChange(event) {
         if (jsSerializeToHash) {
             jsSerializeToHash = false;
             return;
         }
-        debug(arguments);
-        let hash = tryCatch(function() {
-            return JSON.parse(decodeURIComponent(location.hash.slice(1)));
-        }, function(e) {
-            return { script: decodeURIComponent(location.hash.slice(1)) };
+        debugFunc(arguments, function() {
+            let hash = tryCatch(function() {
+                return JSON.parse(decodeURIComponent(location.hash.slice(1)));
+            }, function(e) {
+                return { script: decodeURIComponent(location.hash.slice(1)) };
+            });
+            $decimalPlaces.selectedIndex = hash.decimalPlaces || 0;
+            // $fixedPoint.selectedIndex = hash.fixedPoint;
+            $roundingMethod.selectedIndex = hash.roundingMethod || 0;
+            $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
+            $underline.checked = hash.underline;
+            updateStyle();
+            $script.value = hash.script || "";
+            if (hash.selection) {
+                $script.setSelectionRange(hash.selection.start, hash.selection.start);
+                $script.focus();
+                $script.setSelectionRange(hash.selection.start, hash.selection.end, "none"); // reset direction to `none`
+            }
         });
-        $decimalPlaces.selectedIndex = hash.decimalPlaces || 0;
-        // $fixedPoint.selectedIndex = hash.fixedPoint;
-        $roundingMethod.selectedIndex = hash.roundingMethod || 0;
-        $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
-        $underline.checked = hash.underline;
-        updateStyle();
-        $script.value = hash.script || "";
-        if (hash.selection) {
-            $script.setSelectionRange(hash.selection.start, hash.selection.start);
-            $script.focus();
-            $script.setSelectionRange(hash.selection.start, hash.selection.end, "none"); // reset direction to `none`
-        }
         calculate();
     }
     
-    this.onhashchange = function(event) {
+    this.onhashchange = function onhashchange(event) {
         updateWithHashChange(event);
     };
     
@@ -740,12 +758,12 @@
         $script.classList[$underline.checked ? "add" : "remove"]("underline");
     };
     
-    this.underlineChanged = function(event, target) {
+    this.underlineChanged = function underlineChanged(event, target) {
         updateStyle();
         serializeToHash(); // need not timeout
     };
     
-    this.resetClicked = function(event, target) { debug(arguments);
+    this.resetClicked = function resetClicked(event, target) { debugFunc(arguments);
         $decimalPlaces.selectedIndex = 0;
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
@@ -754,7 +772,7 @@
         sthChanged(null, target);
     };
     
-    this.shortcutsTriggered = function(event, target) {
+    this.shortcutsTriggered = function shortcutsTriggered(event, target) {
         if (document.activeElement != $script || event.altKey || event.metaKey || event.repeat || event.isComposing) {
             return;
         }
@@ -762,34 +780,34 @@
         if (!event.ctrlKey || !["c", "u"].includes(key)) {
             return;
         }
-        debug(arguments);
-        
-        let script = $script.value;
-        let start = $script.selectionStart, end = $script.selectionEnd;
-        if (start == end) {
-            while (start > 0 && script[start - 1].match(/[\w$]/)) {
-                start -= 1;
+        debugFunc(arguments, function() {
+            let script = $script.value;
+            let start = $script.selectionStart, end = $script.selectionEnd;
+            if (start == end) {
+                while (start > 0 && script[start - 1].match(/[\w$]/)) {
+                    start -= 1;
+                }
+                while (end < script.length - 1 && script[end].match(/[\w$]/)) {
+                    end += 1;
+                }
             }
-            while (end < script.length - 1 && script[end].match(/[\w$]/)) {
-                end += 1;
+            
+            let selection = script.substring(start, end);
+            if (selection) {
+                if (key == "c") {
+                    selection = selection[0][event.shiftKey ? "toLowerCase" : "toUpperCase"]() + selection.substring(1);
+                }
+                else { // key == "u"
+                    selection = selection[event.shiftKey ? "toLowerCase" : "toUpperCase"]();
+                }
             }
-        }
-        
-        let selection = script.substring(start, end);
-        if (selection) {
-            if (key == "c") {
-                selection = selection[0][event.shiftKey ? "toLowerCase" : "toUpperCase"]() + selection.substring(1);
-            }
-            else { // key == "u"
-                selection = selection[event.shiftKey ? "toLowerCase" : "toUpperCase"]();
-            }
-        }
-        
-        $script.selectionStart = start;
-        $script.selectionEnd = end;
-        document.execCommand("insertText", false, selection); // enable undo
-        $script.selectionStart = start;
-        $script.selectionEnd = end;
+            
+            $script.selectionStart = start;
+            $script.selectionEnd = end;
+            document.execCommand("insertText", false, selection); // enable undo
+            $script.selectionStart = start;
+            $script.selectionEnd = end;
+        });
         
         sthChanged(null, target);
     };
@@ -800,31 +818,31 @@
         if (document.activeElement != $script) {
             return;
         }
-        debug(arguments);
+        debugFunc(arguments);
         clearTimeout(selectionChangeTimeoutID);
         selectionChangeTimeoutID = setTimeout(function() {
             serializeToHash();
         }, 1000);
     });
     
-    this.focusChanged = function(event, target) { debug(arguments);
+    this.focusChanged = function focusChanged(event, target) { debugFunc(arguments);
         serializeToHash();
     };
     
-    this.scrollingChanged = function(event, target) { // debug(arguments);
+    this.scrollingChanged = function scrollingChanged(event, target) { // debugFunc(arguments);
         [$script, $result, $lineNumber].forEach(function(e, i) {
             e.scrollTop = target.scrollTop;
         });
     };
     
-    this.copyOutputClicked = function(event, target) { debug(arguments);
+    this.copyOutputClicked = function copyOutputClicked(event, target) { debugFunc(arguments, function() {
         $right.appendChild($output)
         $output.focus();
         $output.select();
         document.execCommand("copy");
         (target || $script).focus();
         $output.remove();
-    };
+    });};
     
     if (!location.hash && !location.href.endsWith("#")) {
         location.hash = '#%7B"script"%3A"%23%20ScriptCalculator%5Cn%5Cn%23%23%20Quick%20Start%20%7C%20简单应用%5Cn%5Cn1%20%2B%202%5Cn*%203%5Cn*%2080%25%5Cn%5Cn%23%23%20Result%20Ref%20%7C%20引用结果%5Cn%5Cn10%20-%20%24%5Cn%2F%2F%20Prev%20Result%20%7C%20%24%20是前一个结果，也可以用%20👆🏿%5Cn%5Cn%242%20%2F%202%5Cn%2F%2F%20Nth%20Result%20%7C%20%242%20里的%202%20是右边结果编号%20👉🏿%5Cn%5Cn%23%23%20Variables%20%7C%20变量%5Cn%5Cna%3A%201%5Cnb%3A%202%5Cna%20%2B%20b%5Cn%5Cn%23%23%20Functions%20%7C%20函数%5Cn%5Cnadd\(x%2C%20y\)%3A%20x%20%2B%20y%5Cnadd\(1%2C%202\)%5Cnadd\(3%2C%204\)%5Cn%5Cn%23%23%20More%20%7C%20更多好用的功能介绍看这里%20👇🏿%5Cn%5Cn%2F%2F%20Blog%3A%20https%3A%2F%2Fiwill.im%2F2022%2F07%2F08%2Fscript-calculator%2F%5Cn%2F%2F%20GitHub%3A%20https%3A%2F%2Fgithub.com%2Fiwill%2FScriptCalculator%23readme%5Cn"%7D';
