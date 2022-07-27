@@ -423,7 +423,7 @@
                     
                     /// inline js code
                     // `js` -> eval(js)
-                    code = code.replace(/(?<!`)`.+?`(?!`)/g, function(jsCode) {
+                    code = code.replace(/`.*?`/g, function(jsCode) {
                         return `eval(${jsCode.slice(1, -1)})`;
                     });
                     
@@ -497,7 +497,11 @@
                     
                     /// replace variables with values
                     // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
-                    code = code.replace(/(?<!\.)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
+                    // !!!: cannot use `(?<!\.\s*)`, because Safari does not support negative-lookbehind-assertion
+                    // code = code.replace(/(?<!\.\s*)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) { ... }
+                    // !!!: replace `(?<!\.\s*)` with `\.?`, and return if matched a `.`
+                    code = code.replace(/\.?\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
+                        if (k.startsWith(".")) { return k; }
                         if (funcName && funcArgs && new RegExp(`\\b${k}\\b`).test(funcArgs)) {
                             return k;
                         }
