@@ -438,7 +438,7 @@
                     /// inline js code
                     // `js` -> eval(js)
                     code = code.replace(/`.*?`/g, function(jsCode) {
-                        return `eval(${jsCode.slice(1, -1)})`;
+                        return eval(jsCode.slice(1, -1));
                     });
                     
                     /// validate
