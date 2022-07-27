@@ -406,7 +406,7 @@
                 }
                 
                 if (!jsCode) {
-                    code = code .replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
+                    code = code.replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
                     
                     /// multiple lines: escape line-break by `\`
                     let hasEsc = code.endsWith("\\");
@@ -466,6 +466,9 @@
                         }
                         funcArgs = funcRes.groups.args;
                         code = code.slice(funcRes.index + funcRes[0].length).trim();
+                        if (!code) {
+                            throw `invalid function def in \`${line}\``;
+                        }
                     }
                     
                     /// find variables
@@ -542,7 +545,6 @@
                     });
                     
                     /// convert base of number system
-                    resToBase = 10;
                     let convert = code.match(/#\d+\s*$/);
                     if (convert) {
                         resToBase = Number(convert[0].slice(1));
@@ -578,7 +580,7 @@
                         }
                         display = pctValue + "%";
                     }
-                    else if (resToBase != 10) {
+                    else if (resToBase && resToBase != 10) {
                         let prefix = (resToBase == 2) ? "0b" : (resToBase == 8) ? "0o" : (resToBase == 16) ? "0x" : "";
                         display = prefix + Math.abs(value).toString(resToBase).toUpperCase();
                         if (value < 0) {
@@ -603,21 +605,33 @@
                         }
                     }
                 }
-                else if (type == "boolean") {
-                    // nothing to do
-                }
-                else if (type == "function") {
-                    if (value.name) {
-                        funcs[value.name] = value;
-                        value = undefined;
+                else {
+                    if (resToPercentage || resToBase) {
+                        throw `invalid expression in \`${line}\``;
+                    }
+                    
+                    if (type == "boolean") {
+                        // nothing to do
                     }
                     else {
-                        value = undefined;
-                        throw `invalid JavaScript block at \`${line}\``;
+                        if (varName) {
+                            throw `invalid expression in \`${line}\``;
+                        }
+                        
+                        if (type == "function") {
+                            if (value.name) {
+                                funcs[value.name] = value;
+                                value = undefined;
+                            }
+                            else {
+                                value = undefined;
+                                throw `invalid JavaScript block at \`${line}\``;
+                            }
+                        }
+                        else if (value) {
+                            throw `invalid expression in \`${line}\``;
+                        }
                     }
-                }
-                else if (value) {
-                    throw `invalid expression in \`${line}\``;
                 }
                 
                 console.log(value ? `${code} = ${display || value}` : (`${code} ${comment || ""}`.trim() || "<empty-line>"));
