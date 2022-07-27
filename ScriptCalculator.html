@@ -443,7 +443,7 @@
                     
                     /// validate
                     // symbols
-                    if (/[\[\]{}'"\\;]/g.test(code)) {
+                    if (/[\[\]'"\\;]/g.test(code)) {
                         throw `invalid symbol in \`${line}\``;
                     }
                     // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
@@ -575,7 +575,9 @@
                     }
                     else {
                         console.log(`eval: ${(varName || "") && varName + " = "}${code}`.replace(/%/g, "%%"));
-                        value = eval(code);
+                        // 1. `{}` -> `({})` then thorw an error
+                        // 2. prevent `eval("{ a: 1 }")` returns `1`, WTF!
+                        value = eval(code && `(${code})`);
                     }
                 }
                 
@@ -645,7 +647,7 @@
                                 throw `invalid JavaScript block at \`${line}\``;
                             }
                         }
-                        else if (value) {
+                        else if (value !== undefined) {
                             throw `invalid result in \`${line}\``;
                         }
                     }
