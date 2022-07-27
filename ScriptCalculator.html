@@ -441,9 +441,14 @@
                         return eval(jsCode.slice(1, -1));
                     });
                     
-                    /// validate
-                    // symbols
-                    if (/[\[\]'"\\;]/g.test(code)) {
+                    /// validate symbols
+                    if (/['"`\\\[\];]/g.test(code)) {
+                        throw `invalid symbol in \`${line}\``;
+                    }
+                    // !!!: cannot use `/((?<!\(\s*)\{|\}(?!\s*\)))/g`, because Safari does not support negative-lookbehind-assertion
+                    // - no `(` before `{` - does not support yet
+                    // - after `}` no  `)`
+                    if (/\}(?!\s*\))/g.test(code)) {
                         throw `invalid symbol in \`${line}\``;
                     }
                     // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
