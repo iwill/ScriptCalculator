@@ -505,12 +505,15 @@
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                     code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, function(prefix) {
                         let name = prefix.slice(0, -1).trim();
-                        if (!(validScopes(name) || funcs[name] || name == funcName)
-                            || ["constructor", "prototype", "toSource", "valueOf"].includes(name)) {
+                        if (["constructor", "prototype", "toSource", "valueOf"].includes(name)) {
                             throw `invalid function call in \`${line}\``;
                         }
-                        prefix = validScopes(name) ? name : ("funcs." + name);
-                        prefix += "(";
+                        let namespace;
+                        if (typeof globalThis[name] == "function") namespace = "globalThis";
+                        else if (typeof Math[name] == "function")  namespace = "Math";
+                        else if (typeof funcs[name] == "function" || name == funcName) namespace = "funcs";
+                        else throw `invalid function call in \`${line}\``;
+                        prefix = `${namespace}.${name}(`;
                         if (name.startsWith("$")) { // for `$sum`, ...
                             prefix += "vals, "
                         }
@@ -572,18 +575,16 @@
                 }
                 
                 /// eval
-                with (Math) {
-                    if (funcName && funcArgs) {
-                        let js = `${funcArgs} => ${code};`;
-                        console.log(`eval: ${funcName} = ${js}`.replace(/%/g, "%%"));
-                        funcs[funcName] = eval(js);
-                    }
-                    else {
-                        console.log(`eval: ${(varName || "") && varName + " = "}${code}`.replace(/%/g, "%%"));
-                        // 1. `{}` -> `({})` then thorw an error
-                        // 2. prevent `eval("{ a: 1 }")` returns `1`, WTF!
-                        value = eval(code && `(${code})`);
-                    }
+                if (funcName && funcArgs) {
+                    let js = `${funcArgs} => ${code};`;
+                    console.log(`eval: ${funcName} = ${js}`.replace(/%/g, "%%"));
+                    funcs[funcName] = eval(js);
+                }
+                else {
+                    console.log(`eval: ${(varName || "") && varName + " = "}${code}`.replace(/%/g, "%%"));
+                    // 1. `{}` -> `({})` then thorw an error
+                    // 2. prevent `eval("{ a: 1 }")` returns `1`, because `a`` is treated a `goto` label
+                    value = eval(code && `(${code})`);
                 }
                 
                 /// value, variables and display
