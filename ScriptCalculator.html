@@ -192,7 +192,8 @@
     </div>
 </body>
 <script type="text/javascript">
-(function(undefined) {
+(function onload(undefined) {
+    // "use strict";
     
     /*
     
@@ -289,6 +290,12 @@
     
     Math.GR = Math.sqrt(1.25) - 0.5; // GoldenRatio
     
+    // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
+    // tagged templates:
+    // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
+    // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
+    let makeRegExp = (regExp, opts) => new RegExp(regExp.raw[0].replace(/\s/mg, ""), opts || "");
+    
     function tryCatch(f1, f2) {
         try {
             return f1();
@@ -309,9 +316,23 @@
         }
     }
     
-    function debugFunc(args, fn) {
-        console.debug("func: " + [args.callee.caller?.name, args.callee.name].filter(function(x) { return x; }).join(" > "));
-        debugGroup(args.callee.name, fn);
+    function debugFunc(_args, src, fn) {
+        if (typeof src == "function") {
+            fn = src;
+            src = undefined;
+        }
+        let use_strict = (function() { return !this; })();
+        if (use_strict) {
+            fn && fn();
+        }
+        else {
+            let path = [_args.callee.caller?.name, _args.callee.name].filter(function(x) { return x; }).join(" > ");
+            if (src) {
+                path = `${src}.${path}`
+            }
+            console.debug(`func: ${path}`);
+            debugGroup(_args.callee.name, fn);
+        }
     }
     
     function validScopes(name) {
@@ -458,11 +479,6 @@
                     
                     /// find functions
                     // `fun({?[arg0[, argN]*]?}?):` // supports roro args https://www.tinyblog.dev/blog/2020-07-13-javascript-roro-pattern/
-                    // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
-                    // tagged templates:
-                    // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
-                    // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
-                    let makeRegExp = (regExp, opts) => new RegExp(regExp.raw[0].replace(/\s/mg, ""), opts || "");
                     // `[A-z_][A-z0-9_]*` == `\b(?!\d)\w+\b`
                     let regExp = makeRegExp`
                         ^ \s*
@@ -695,10 +711,10 @@
     });}
     
     let sthChangedTimeoutID = 0;
-    this.sthChanged = function sthChanged(event, target) { debugFunc(arguments);
+    globalThis.sthChanged = function sthChanged(event, target) { debugFunc(arguments, target.id);
         $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
         clearTimeout(sthChangedTimeoutID);
-        sthChangedTimeoutID = setTimeout(function() {
+        sthChangedTimeoutID = setTimeout(function _sthChanged() {
             calculate();
             serializeToHash();
         }, 1000);
@@ -737,28 +753,29 @@
             return;
         }
         debugFunc(arguments, function() {
-            let hash = tryCatch(function() {
-                return JSON.parse(decodeURIComponent(location.hash.slice(1)));
+            let hash = decodeURIComponent(location.hash.slice(1));
+            let json = tryCatch(function() {
+                return JSON.parse(hash);
             }, function(e) {
-                return { script: decodeURIComponent(location.hash.slice(1)) };
+                return { script: hash };
             });
-            $decimalPlaces.selectedIndex = hash.decimalPlaces || 0;
-            // $fixedPoint.selectedIndex = hash.fixedPoint;
-            $roundingMethod.selectedIndex = hash.roundingMethod || 0;
+            $decimalPlaces.selectedIndex = json.decimalPlaces || 0;
+            // $fixedPoint.selectedIndex = json.fixedPoint;
+            $roundingMethod.selectedIndex = json.roundingMethod || 0;
             $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
-            $underline.checked = hash.underline;
+            $underline.checked = json.underline;
             updateStyle();
-            $script.value = hash.script || "";
-            if (hash.selection) {
-                $script.setSelectionRange(hash.selection.start, hash.selection.start);
+            $script.value = json.script || "";
+            if (json.selection) {
+                $script.setSelectionRange(json.selection.start, json.selection.start);
                 $script.focus();
-                $script.setSelectionRange(hash.selection.start, hash.selection.end, "none"); // reset direction to `none`
+                $script.setSelectionRange(json.selection.start, json.selection.end, "none"); // reset direction to `none`
             }
         });
         calculate();
     }
     
-    this.onhashchange = function onhashchange(event) {
+    globalThis.onhashchange = function onhashchange(event) {
         updateWithHashChange(event);
     };
     
@@ -766,12 +783,12 @@
         $script.classList[$underline.checked ? "add" : "remove"]("underline");
     };
     
-    this.underlineChanged = function underlineChanged(event, target) {
+    globalThis.underlineChanged = function underlineChanged(event, target) {
         updateStyle();
         serializeToHash(); // need not timeout
     };
     
-    this.resetClicked = function resetClicked(event, target) { debugFunc(arguments);
+    globalThis.resetClicked = function resetClicked(event, target) { debugFunc(arguments, target.id);
         $decimalPlaces.selectedIndex = 0;
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
@@ -780,7 +797,7 @@
         sthChanged(null, target);
     };
     
-    this.shortcutsTriggered = function shortcutsTriggered(event, target) {
+    globalThis.shortcutsTriggered = function shortcutsTriggered(event, target) {
         if (document.activeElement != $script || event.altKey || event.metaKey || event.repeat || event.isComposing) {
             return;
         }
@@ -788,7 +805,7 @@
         if (!event.ctrlKey || !["c", "u"].includes(key)) {
             return;
         }
-        debugFunc(arguments, function() {
+        debugFunc(arguments, target.id, function() {
             let script = $script.value;
             let start = $script.selectionStart, end = $script.selectionEnd;
             if (start == end) {
@@ -822,28 +839,28 @@
     
     let selectionChangeTimeoutID = 0;
     // Chrome does not supports `onselectionchanged`
-    document.addEventListener('selectionchange', function selectionChange(event) {
+    document.addEventListener('selectionchange', function selectionchange(event) {
         if (document.activeElement != $script) {
             return;
         }
         debugFunc(arguments);
         clearTimeout(selectionChangeTimeoutID);
-        selectionChangeTimeoutID = setTimeout(function() {
+        selectionChangeTimeoutID = setTimeout(function _selectionchange() {
             serializeToHash();
         }, 1000);
     });
     
-    this.focusChanged = function focusChanged(event, target) { debugFunc(arguments);
+    globalThis.focusChanged = function focusChanged(event, target) { debugFunc(arguments);
         serializeToHash();
     };
     
-    this.scrollingChanged = function scrollingChanged(event, target) { // debugFunc(arguments);
+    globalThis.scrollingChanged = function scrollingChanged(event, target) { // debugFunc(arguments, target.id);
         [$script, $result, $lineNumber].forEach(function(e, i) {
             e.scrollTop = target.scrollTop;
         });
     };
     
-    this.copyOutputClicked = function copyOutputClicked(event, target) { debugFunc(arguments, function() {
+    globalThis.copyOutputClicked = function copyOutputClicked(event, target) { debugFunc(arguments, function() {
         $right.appendChild($output)
         $output.focus();
         $output.select();
