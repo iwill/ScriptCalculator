@@ -201,7 +201,7 @@
     
     TODO:
     
-    - qr code for sharing
+    - url shortener for sharing
     
     - calculation performance
     
@@ -554,7 +554,7 @@
                     // `dollar [numbers] (no-sum|avg|min|max)`
                     code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, function($x) {
                         if ($x == "$") {
-                            return vars.$;
+                            return `(${vars.$})`;
                         }
                         let index = Number($x.slice(1));
                         if (index < 0) {
@@ -710,17 +710,12 @@
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
     });}
     
-    let sthChangedTimeoutID = 0;
-    globalThis.sthChanged = function sthChanged(event, target) { debugFunc(arguments, target.id);
-        $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
-        clearTimeout(sthChangedTimeoutID);
-        sthChangedTimeoutID = setTimeout(function _sthChanged() {
-            calculate();
-            serializeToHash();
-        }, 1000);
+    function updateStyle() {
+        $script.classList[$underline.checked ? "add" : "remove"]("underline");
     };
     
     let jsSerializeToHash = false;
+    
     function serializeToHash() { debugFunc(arguments, function() {
         let json = {};
         if ($decimalPlaces.selectedIndex) {
@@ -744,10 +739,15 @@
             jsSerializeToHash = true;
             location.hash = hash;
             // DONOT reset `jsSerializeToHash` here
+            let urlTooLoong = location.href.length > 65536;
+            $script.style.outlineColor = $result.style.outlineColor = (urlTooLoong ? "red" : null);
+            if (urlTooLoong) {
+                console.error(`url is too loong: ${location.href.length}!`);
+            }
         }
     });}
     
-    function updateWithHashChange(event) {
+    function updateWithHashChange() {
         if (jsSerializeToHash) {
             jsSerializeToHash = false;
             return;
@@ -775,12 +775,22 @@
         calculate();
     }
     
-    globalThis.onhashchange = function onhashchange(event) {
-        updateWithHashChange(event);
+    let calculateTimeoutID = 0, serializeTimeoutID = 0;
+    
+    globalThis.sthChanged = function sthChanged(event, target) { debugFunc(arguments, target.id);
+        $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
+        clearTimeout(calculateTimeoutID);
+        calculateTimeoutID = setTimeout(function _sthChanged() {
+            calculate();
+        }, 1000);
+        clearTimeout(serializeTimeoutID);
+        serializeTimeoutID = setTimeout(function _sthChanged() {
+            serializeToHash();
+        }, 1000);
     };
     
-    function updateStyle() {
-        $script.classList[$underline.checked ? "add" : "remove"]("underline");
+    globalThis.onhashchange = function onhashchange(event) {
+        updateWithHashChange();
     };
     
     globalThis.underlineChanged = function underlineChanged(event, target) {
@@ -837,15 +847,14 @@
         sthChanged(null, target);
     };
     
-    let selectionChangeTimeoutID = 0;
     // Chrome does not supports `onselectionchanged`
     document.addEventListener('selectionchange', function selectionchange(event) {
         if (document.activeElement != $script) {
             return;
         }
         debugFunc(arguments);
-        clearTimeout(selectionChangeTimeoutID);
-        selectionChangeTimeoutID = setTimeout(function _selectionchange() {
+        clearTimeout(serializeTimeoutID);
+        serializeTimeoutID = setTimeout(function _selectionchange() {
             serializeToHash();
         }, 1000);
     });
@@ -873,7 +882,7 @@
         location.hash = '#%7B"script"%3A"%23%20ScriptCalculator%5Cn%5Cn%23%23%20Quick%20Start%20%7C%20简单应用%5Cn%5Cn1%20%2B%202%5Cn*%203%5Cn*%2080%25%5Cn%5Cn%23%23%20Result%20Ref%20%7C%20引用结果%5Cn%5Cn10%20-%20%24%5Cn%2F%2F%20Prev%20Result%20%7C%20%24%20是前一个结果，也可以用%20👆🏿%5Cn%5Cn%242%20%2F%202%5Cn%2F%2F%20Nth%20Result%20%7C%20%242%20里的%202%20是右边结果编号%20👉🏿%5Cn%5Cn%23%23%20Variables%20%7C%20变量%5Cn%5Cna%3A%201%5Cnb%3A%202%5Cna%20%2B%20b%5Cn%5Cn%23%23%20Functions%20%7C%20函数%5Cn%5Cnadd\(x%2C%20y\)%3A%20x%20%2B%20y%5Cnadd\(1%2C%202\)%5Cnadd\(3%2C%204\)%5Cn%5Cn%23%23%20More%20%7C%20更多好用的功能介绍看这里%20👇🏿%5Cn%5Cn%2F%2F%20Blog%3A%20https%3A%2F%2Fiwill.im%2F2022%2F07%2F08%2Fscript-calculator%2F%5Cn%2F%2F%20GitHub%3A%20https%3A%2F%2Fgithub.com%2Fiwill%2FScriptCalculator%23readme%5Cn"%7D';
     }
     else {
-        updateWithHashChange(null);
+        updateWithHashChange();
     }
 })();
 </script>
