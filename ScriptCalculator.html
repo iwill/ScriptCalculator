@@ -570,7 +570,7 @@
                     });
                     /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
                     let prevRes = result[result.length - 1]; // if prev line has res, then prepend prev value - vars.$
-                    if ((prevRes || prevRes === 0 || prevRes === false) && prevRes != "ERROR" && code.length && !code.match(/^[~!\(\w\$👆]+/u)) {
+                    if ((prevRes || prevRes === 0 || prevRes === false) && prevRes != "ERROR" && code.length && code.match(/^([^~!\(\w\$👆]|!=)+/u)) {
                         code = `(${vars.$}) ${code}`;
                     }
                     
