@@ -459,7 +459,8 @@
                     /// inline js code
                     // `js` -> eval(js)
                     code = code.replace(/`.*?`/g, function(jsCode) {
-                        return eval(jsCode.slice(1, -1));
+                        // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/Function#:~:text=the%20Function%20constructor%20creates%20functions%20which%20execute%20in%20the%20global%20scope%20only
+                        return new Function("funcs", "vars", "vals", `"use strict"; return ${jsCode.slice(1, -1)}`)(funcs, vars, vals);
                     });
                     
                     /// validate symbols
@@ -521,7 +522,7 @@
                     // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                     code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, function(prefix) {
                         let name = prefix.slice(0, -1).trim();
-                        if (["constructor", "prototype", "toSource", "valueOf"].includes(name)) {
+                        if (["constructor", "prototype", "toSource", "valueOf", "eval"].includes(name)) {
                             throw `invalid function call in \`${line}\``;
                         }
                         let namespace;
@@ -594,13 +595,13 @@
                 if (funcName && funcArgs) {
                     let js = `${funcArgs} => ${code};`;
                     console.log(`eval: ${funcName} = ${js}`.replace(/%/g, "%%"));
-                    funcs[funcName] = eval(js);
+                    funcs[funcName] = new Function("funcs", "vars", "vals", `"use strict"; return ${js}`)(funcs, vars, vals);
                 }
                 else {
                     console.log(`eval: ${(varName || "") && varName + " = "}${code}`.replace(/%/g, "%%"));
                     // 1. `{}` -> `({})` then thorw an error
                     // 2. prevent `eval("{ a: 1 }")` returns `1`, because `a`` is treated a `goto` label
-                    value = eval(code && `(${code})`);
+                    value = new Function("funcs", "vars", "vals", code && `"use strict"; return (${code})`)(funcs, vars, vals);
                 }
                 
                 /// value, variables and display
