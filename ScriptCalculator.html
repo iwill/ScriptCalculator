@@ -294,7 +294,7 @@
     // tagged templates:
     // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
     // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
-    let makeRegExp = (regExp, opts) => new RegExp(regExp.raw[0].replace(/\s/mg, ""), opts || "");
+    RegExp.make = (regExp, opts) => new RegExp(regExp.raw[0].replace(/( #.*|\s)/mg, ""), opts || "");
     
     function tryCatch(f1, f2) {
         try {
@@ -467,9 +467,9 @@
                     if (/['"`\\\[\];]/g.test(code)) {
                         throw `invalid symbol in \`${line}\``;
                     }
-                    // !!!: cannot use `/((?<!\(\s*)\{|\}(?!\s*\)))/g`, because Safari does not support negative-lookbehind-assertion
-                    // - no `(` before `{` - does not support yet
-                    // - after `}` no  `)`
+                    // !!!: cannot use `/((?<!\w\s*\(\s*)\{|\}(?!\s*\)))/g`, because Safari does not support negative-lookbehind-assertion
+                    // - no `(` before `\w\s*{` - does not support yet
+                    // - after `}` no `)`
                     if (/\}(?!\s*\))/g.test(code)) {
                         throw `invalid symbol in \`${line}\``;
                     }
@@ -481,7 +481,7 @@
                     /// find functions
                     // `fun({?[arg0[, argN]*]?}?):` // supports roro args https://www.tinyblog.dev/blog/2020-07-13-javascript-roro-pattern/
                     // `[A-z_][A-z0-9_]*` == `\b(?!\d)\w+\b`
-                    let regExp = makeRegExp`
+                    let regExp = RegExp.make`
                         ^ \s*
                         (?<name> \b[A-z_][A-z0-9_]* ) \s*
                         (?<args>
