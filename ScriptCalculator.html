@@ -180,6 +180,7 @@
             <button id="reset" onclick="resetClicked(event, this)">reset</button>
             |
             <button id="copy" onclick="copyOutputClicked(event, this)">copy</button>
+            <button id="share" onclick="shareShortenedURL(event, this)">share (beta)</button>
         </div>
     </div>
     <div id="left" class="container">
@@ -877,6 +878,13 @@
         document.execCommand("copy");
         (target || $script).focus();
         $output.remove();
+    });};
+    
+    globalThis.shareShortenedURL = function shareShortenedURL(event, target) { debugFunc(arguments, function() {
+        // https://docs.github.com/en/rest/issues/issues#create-an-issue
+        let href = encodeURIComponent(location.href);
+        let base = encodeURIComponent(location.href.replace(/[?#].*/, ""));
+        window.open(`https://github.com/iwill/url-db/issues/new?template=url-shortener-template.md&title=${base}&body=${href}`, "_blank");
     });};
     
     if (!location.hash && !location.href.endsWith("#")) {
