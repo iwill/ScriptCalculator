@@ -206,9 +206,7 @@
     
     TODO:
     
-    - url shortener for sharing
-    
-    - calculation performance
+    - performance?
     
     - ???: ignore trailing + - * / ((( ...
     
@@ -446,8 +444,6 @@
                 }
                 
                 if (!jsCode) {
-                    code = code.replace(/(^|[^<!=>])=(?!=)/g, "$1=="); // replace single = with ==
-                    
                     /// multiple lines: escape line-break by `\`
                     let hasEsc = code.endsWith("\\");
                     if (hasEsc || multiLines) {
@@ -467,6 +463,9 @@
                         // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/Function#:~:text=the%20Function%20constructor%20creates%20functions%20which%20execute%20in%20the%20global%20scope%20only
                         return new Function("funcs", "vars", "vals", `"use strict"; return ${jsCode.slice(1, -1)}`)(funcs, vars, vals);
                     });
+                    
+                    /// replace single = with ==
+                    code = code.replace(/(^|[^<!=>])=(?!=)/g, "$1==");
                     
                     /// validate symbols
                     if (/['"`\\\[\];]/g.test(code)) {
