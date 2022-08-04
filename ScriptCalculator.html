@@ -773,6 +773,7 @@
     }
     
     let jsSerializeToHash = false;
+    let selectionPlaceholder = 1000000;
     
     function serializeToHash() { debugFunc(arguments, function() {
         let json = {};
@@ -788,8 +789,8 @@
         if ($script.value) {
             json.script = $script.value;
             json.selection = {
-                start: $script.selectionStart,
-                end: $script.selectionEnd
+                start: $script.selectionStart + selectionPlaceholder,
+                end: $script.selectionEnd + selectionPlaceholder
             };
         }
         let hash = Object.keys(json).length ? `#${encodeURIComponent(JSON.stringify(json))}` : "";
@@ -821,6 +822,8 @@
             updateBorderStyle();
             $script.value = json.script || "";
             if (json.selection) {
+                json.selection.start -= selectionPlaceholder;
+                json.selection.end -= selectionPlaceholder;
                 $script.setSelectionRange(json.selection.start, json.selection.start);
                 $script.focus();
                 $script.setSelectionRange(json.selection.start, json.selection.end, "none"); // reset direction to `none`
