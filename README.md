@@ -181,9 +181,13 @@ double(1)  // 2
 
 - sync scrolling
 
+- vertical ruler
+
 - change case: <kbd>control</kbd>+<kbd>u</kbd>, <kbd>control</kbd>+<kbd>shift</kbd>+<kbd>u</kbd>, <kbd>control</kbd>+<kbd>c</kbd>, <kbd>control</kbd>+<kbd>shift</kbd>+<kbd>c</kbd>
 
 - serialize script to url hash and deserialize
+
+- share with short url
 
 - console log
 
@@ -220,10 +224,6 @@ return f(n - 1) + f(n - 2);
     - <kbd>control</kbd>+<kbd>m</kbd>: align script middle - align code right and comment left
     - <kbd>control</kbd>+<kbd>[</kbd>: indent left with 4 spaces
     - <kbd>control</kbd>+<kbd>]</kbd>: indent right with 4 spaces
-
-- ruler for alinment
-    
-    a vertical line for script alignment
 
 - display error info at the page bottom
     - display error count
