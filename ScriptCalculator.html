@@ -110,14 +110,11 @@
         position: absolute;
         top: 0;
         right: 0;
-        /* one side padding and border for calculating caret position */
-        padding-right: var(--space);
-        border-right-style: solid;
-        border-right-width: 1px;
-        line-height: 15px;
-        white-space: pre;
-        word-wrap: normal; /* for Safari */
-        overflow-x: scroll;
+        width: revert;
+        height: revert;
+        /* remove left padding and border for calculating caret position */
+        padding-left: 0;
+        border-left-width: 0;
         opacity: 0;
     }
     #script {
@@ -214,8 +211,8 @@
     </div>
     <div id="left" class="container">
         <hr id="ruler" />
-        <pre id="rulerHelper"></pre>
         <textarea id="script" class="code" oninput="sthChanged(event, this)" onkeydown="shortcutsTriggered(event, this)" onblur="focusChanged(event, this)" onscroll="scrollingChanged(event, this)"></textarea>
+        <pre id="rulerHelper" class="code"></pre>
     </div>
     <div id="right" class="container">
         <textarea readonly id="result" class="code" onscroll="scrollingChanged(event, this)"></textarea>
