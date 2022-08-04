@@ -739,7 +739,7 @@
                 end: $script.selectionEnd
             };
         }
-        let hash = Object.keys(json).length ? encodeURIComponent(JSON.stringify(json)) : "";
+        let hash = Object.keys(json).length ? `#${encodeURIComponent(JSON.stringify(json))}` : "";
         if (location.hash != hash) {
             jsSerializeToHash = true;
             location.hash = hash;
