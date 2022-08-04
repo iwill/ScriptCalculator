@@ -715,9 +715,17 @@
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
     });}
     
-    function updateStyle() {
+    function updateScriptStyle() {
         $script.classList[$underline.checked ? "add" : "remove"]("underline");
-    };
+    }
+    
+    function updateBorderStyle() {
+        let urlTooLoong = location.href.length > 65536;
+        $script.style.outlineColor = $result.style.outlineColor = (urlTooLoong ? "red" : null);
+        if (urlTooLoong) {
+            console.error(`url is too loong: ${location.href.length}!`);
+        }
+    }
     
     let jsSerializeToHash = false;
     
@@ -742,13 +750,8 @@
         let hash = Object.keys(json).length ? `#${encodeURIComponent(JSON.stringify(json))}` : "";
         if (location.hash != hash) {
             jsSerializeToHash = true;
-            location.hash = hash;
-            // DONOT reset `jsSerializeToHash` here
-            let urlTooLoong = location.href.length > 65536;
-            $script.style.outlineColor = $result.style.outlineColor = (urlTooLoong ? "red" : null);
-            if (urlTooLoong) {
-                console.error(`url is too loong: ${location.href.length}!`);
-            }
+            location.hash = hash; // !!!: DONOT reset `jsSerializeToHash` here
+            updateBorderStyle();
         }
     });}
     
@@ -769,7 +772,8 @@
             $roundingMethod.selectedIndex = json.roundingMethod || 0;
             $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
             $underline.checked = json.underline;
-            updateStyle();
+            updateScriptStyle();
+            updateBorderStyle();
             $script.value = json.script || "";
             if (json.selection) {
                 $script.setSelectionRange(json.selection.start, json.selection.start);
@@ -799,7 +803,7 @@
     };
     
     globalThis.underlineChanged = function underlineChanged(event, target) {
-        updateStyle();
+        updateScriptStyle();
         serializeToHash(); // need not timeout
     };
     
@@ -808,7 +812,7 @@
         // $fixedPoint.selectedIndex = 0;
         $roundingMethod.selectedIndex = 0;
         $underline.checked = false;
-        updateStyle();
+        updateScriptStyle();
         sthChanged(null, target);
     };
     
