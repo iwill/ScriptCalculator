@@ -211,7 +211,7 @@
     </div>
     <div id="left" class="container">
         <hr id="ruler" />
-        <textarea id="script" class="code" oninput="sthChanged(event, this)" onkeydown="shortcutsTriggered(event, this)" onblur="focusChanged(event, this)" onscroll="scrollingChanged(event, this)"></textarea>
+        <textarea id="script" class="code" oninput="sthChanged(event, this)" onkeydown="shortcutsTriggered(event, this)" onscroll="scrollingChanged(event, this)"></textarea>
         <pre id="rulerHelper" class="code"></pre>
     </div>
     <div id="right" class="container">
@@ -773,7 +773,8 @@
     }
     
     let jsSerializeToHash = false;
-    let selectionPlaceholder = 1000000;
+    const selectionPlaceholder = 1000000;
+    const selectionRegExp = /(\d+)\|(\d+)$/;
     
     function serializeToHash() { debugFunc(arguments, function() {
         let json = {};
@@ -788,17 +789,16 @@
         }
         if ($script.value) {
             json.script = $script.value;
-            json.selection = {
-                start: $script.selectionStart + selectionPlaceholder,
-                end: $script.selectionEnd + selectionPlaceholder
-            };
         }
         let hash = Object.keys(json).length ? `#${encodeURIComponent(JSON.stringify(json))}` : "";
-        if (location.hash != hash) {
+        if (location.hash.replace(selectionRegExp, "") != hash) {
             jsSerializeToHash = true;
             location.hash = hash; // !!!: DONOT reset `jsSerializeToHash` here
-            updateBorderStyle();
         }
+        if (location.hash) {
+            location.replace(`${hash}${$script.selectionStart + selectionPlaceholder}|${$script.selectionEnd + selectionPlaceholder}`);
+        }
+        updateBorderStyle();
     });}
     
     function updateWithHashChange() {
@@ -808,6 +808,12 @@
         }
         debugFunc(arguments, function() {
             let hash = decodeURIComponent(location.hash.slice(1));
+            let match = hash.match(selectionRegExp);
+            let selection;
+            if (match) {
+                hash = hash.slice(0, match.index);
+                selection = { start: match[1] - selectionPlaceholder, end: match[2] - selectionPlaceholder };
+            }
             let json = tryCatch(function() {
                 return JSON.parse(hash);
             }, function(e) {
@@ -821,12 +827,10 @@
             updateScriptStyle();
             updateBorderStyle();
             $script.value = json.script || "";
-            if (json.selection) {
-                json.selection.start -= selectionPlaceholder;
-                json.selection.end -= selectionPlaceholder;
-                $script.setSelectionRange(json.selection.start, json.selection.start);
+            if (selection) {
+                $script.setSelectionRange(selection.start, selection.start);
                 $script.focus();
-                $script.setSelectionRange(json.selection.start, json.selection.end, "none"); // reset direction to `none`
+                $script.setSelectionRange(selection.start, selection.end, "none"); // reset direction to `none`
             }
         });
         calculate();
@@ -906,7 +910,7 @@
     };
     
     // Chrome does not supports `onselectionchanged`
-    document.addEventListener('selectionchange', function selectionchange(event) {
+    document.addEventListener("selectionchange", function selectionchange(event) {
         if (document.activeElement != $script) {
             return;
         }
@@ -917,10 +921,6 @@
             serializeToHash();
         }, 1000);
     });
-    
-    globalThis.focusChanged = function focusChanged(event, target) { debugFunc(arguments);
-        serializeToHash();
-    };
     
     globalThis.scrollingChanged = function scrollingChanged(event, target) { // debugFunc(arguments, target.id);
         [$script, $result, $lineNumber].forEach(function(e, i) {
