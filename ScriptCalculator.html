@@ -363,7 +363,10 @@
     }
     
     function validScopes(name) {
-        return Math[name] || globalThis[name];
+        let globalVar = ["Infinity", "NaN", "undefined",
+            "isFinite", "isNaN", "parseFloat", "parseInt",
+            "Number", "BigInt"]; // only math related, NO "Boolean", "String", "Array", "Object", "Date", "RegExp"
+        return Math[name] || (globalVar.includes(name) ? globalThis[name] : undefined);
     }
     
     let $left = document.querySelector("#left");
@@ -557,9 +560,9 @@
                             throw `invalid function call in \`${line}\``;
                         }
                         let namespace;
-                        if (typeof globalThis[name] == "function") namespace = "globalThis";
+                        if (typeof funcs[name] == "function" || name == funcName) namespace = "funcs";
                         else if (typeof Math[name] == "function")  namespace = "Math";
-                        else if (typeof funcs[name] == "function" || name == funcName) namespace = "funcs";
+                        else if (typeof globalThis[name] == "function") namespace = "globalThis";
                         else throw `invalid function call in \`${line}\``;
                         prefix = `${namespace}.${name}(`;
                         if (name.startsWith("$")) { // for `$sum`, ...
@@ -578,7 +581,7 @@
                         if (funcName && funcArgs && new RegExp(`\\b${k}\\b`).test(funcArgs)) {
                             return k;
                         }
-                        let v = validScopes(k) || vars[k];
+                        let v = validScopes(k) || vars[k]; // `vars[k]` at last, because the value maybe `0`
                         return `(${v !== undefined ? v : k})`;
                     });
                     
