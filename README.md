@@ -183,7 +183,17 @@ double(1)  // 2
 
 - vertical ruler
 
-- change case: <kbd>control</kbd>+<kbd>u</kbd>, <kbd>control</kbd>+<kbd>shift</kbd>+<kbd>u</kbd>, <kbd>control</kbd>+<kbd>c</kbd>, <kbd>control</kbd>+<kbd>shift</kbd>+<kbd>c</kbd>
+- change case:
+    - <kbd>control</kbd>+<kbd>u</kbd>: uppercase
+    - <kbd>control</kbd>+<kbd>shift</kbd>+<kbd>u</kbd>: lowercase
+    - <kbd>control</kbd>+<kbd>option</kbd>+<kbd>u</kbd>: capitalize
+
+- format with shortcuts:
+    - <kbd>control</kbd>+<kbd>l</kbd>: align script left, appending spaces to the right, or prepend spaces to the left if press <kbd>shift</kbd>
+    - <kbd>control</kbd>+<kbd>r</kbd>: align script right, remove leading and trailing spaces
+    - <kbd>control</kbd>+<kbd>m</kbd>: align script middle, align to trailing comments
+    - <kbd>control</kbd>+<kbd>[</kbd>: indent left with 4 spaces, or 1 space if press <kbd>shift</kbd>
+    - <kbd>control</kbd>+<kbd>]</kbd>: indent right with 4 spaces, or 1 space if press <kbd>shift</kbd>
 
 - serialize script to url hash and deserialize
 
@@ -217,13 +227,6 @@ if (n <= 2) return 1;
 return f(n - 1) + f(n - 2);
 ```
 ````
-
-- format with shortcuts
-    - <kbd>control</kbd>+<kbd>l</kbd>: align script left - by appending spaces to the right
-    - <kbd>control</kbd>+<kbd>r</kbd>: align script right - remove leading and trailing spaces
-    - <kbd>control</kbd>+<kbd>m</kbd>: align script middle - align code right and comment left
-    - <kbd>control</kbd>+<kbd>[</kbd>: indent left with 4 spaces
-    - <kbd>control</kbd>+<kbd>]</kbd>: indent right with 4 spaces
 
 - display error info at the page bottom
     - display error count
