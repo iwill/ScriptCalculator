@@ -918,7 +918,10 @@
                     return;
                 }
                 
-                if (script[start] != "\n") {
+                if (script[start] == "\n" && start < end) {
+                    start += 1;
+                }
+                else {
                     let left = script.slice(0, start).match(/\n?.*$/);
                     if (left) {
                         start -= left[0].length;
@@ -928,7 +931,10 @@
                     }
                 }
                 
-                if (script[end - 1] != "\n") {
+                if (script[end - 1] == "\n" && end > start) {
+                    end -= 1;
+                }
+                else {
                     let right = script.slice(end).match(/^.*\n?/);
                     if (right) {
                         end += right[0].length;
@@ -942,9 +948,6 @@
                 if (keyName == "KeyL") {
                     let maxLength = selections.reduce((max, line) => Math.max(max, line.length), 0);
                     selections = selections.map((line, index) => {
-                        if (!line && (index == 0 || index == selections.length - 1)) {
-                            return line;
-                        }
                         let spaces = " ".repeat(maxLength - line.length);
                         return event.shiftKey ? spaces + line : line + spaces;
                     });
@@ -965,9 +968,6 @@
                     if (maxLength > 0) { // `if (maxLength > 0)` instead of `if (maxLength)`, because `maxLength` may be `-1`
                         for (let i = 0; i < lengths.length; i++) {
                             let line = selections[i];
-                            if (!line && (i == 0 || i == selections.length - 1)) {
-                                continue;
-                            }
                             let length = lengths[i];
                             if (length < 0) {
                                 continue;
@@ -982,18 +982,12 @@
                 
                 else if (keyName == "BracketLeft") {
                     selections = selections.map((line, index) => {
-                        if (!line && (index == 0 || index == selections.length - 1)) {
-                            return line;
-                        }
                         return line + (event.shiftKey ? " " : "    ");
                     });
                 }
                 
                 else if (keyName == "BracketRight") {
                     selections = selections.map((line, index) => {
-                        if (!line && (index == 0 || index == selections.length - 1)) {
-                            return line;
-                        }
                         return line.replace(event.shiftKey ? / $/ : / {0,4}$/, "");
                     });
                 }
@@ -1001,12 +995,10 @@
                 selection = selections.join("\n");
             }
             
-            $script.selectionStart = start;
-            $script.selectionEnd = end;
+            $script.setSelectionRange(start, end);
             document.execCommand("insertText", false, selection); // enable undo
             end = start + selection.length;
-            $script.selectionStart = start;
-            $script.selectionEnd = end;
+            $script.setSelectionRange(start, end);
         });
         
         sthChanged(null, target);
