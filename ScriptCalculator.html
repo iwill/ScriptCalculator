@@ -225,6 +225,7 @@
             ]
         </div>
         <div style="position: absolute; right: 0; top: 0; padding: var(--space) 0;">
+            <span id="errorsCount"></span>
             decimal: <select id="decimalPlaces" onchange="sthChanged(event, this)">
                 <option value="-1">--</option><option value="0">0</option>
                 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
@@ -676,7 +677,7 @@
                                 funcArgs = "(...)";
                                 funcs[funcName] = value;
                                 value = undefined;
-                                throw "DEPRECATED: defining func via func name is deprecated"
+                                throw "WARNING: defining func via func name is deprecated"
                             }
                         }
                     }
@@ -752,10 +753,10 @@
             catch(e) {
                 console.warn((e + "").replace(/%/g, "%%"));
                 if (vars._enable_error) {
-                    value = `${e}`.startsWith("DEPRECATED") ? e : "ERROR: " + e;
+                    value = `${e}`.startsWith("WARNING") ? e : "ERROR: " + e;
                 }
                 else {
-                    value = `${e}`.startsWith("DEPRECATED") ? "DEPRECATED" : "ERROR";
+                    value = `${e}`.startsWith("WARNING") ? "WARNING" : "ERROR";
                 }
             }
             
@@ -786,6 +787,19 @@
         
         let lnLength = vals.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
+        
+        let errorsCount = result.reduce(function(obj, res) {
+            if (typeof res == "string") {
+                if (res.startsWith("ERROR")) obj.errors += 1;
+                else if (res.startsWith("WARNING")) obj.warnings += 1;
+            }
+            return obj;
+        }, { errors: 0, warnings: 0 });
+        let text = [
+            errorsCount.errors && "errors: "+ errorsCount.errors,
+            errorsCount.warnings && "warnings: " + errorsCount.warnings,
+        ].filter((res) => res).join(", ");
+        document.querySelector("#errorsCount").innerText = text ? text + " |" : null;
     });}
     
     function updateScriptStyle() {
