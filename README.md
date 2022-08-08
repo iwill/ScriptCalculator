@@ -148,21 +148,78 @@ add({ a: 1, b: 2 }) // 3
 
 - JavaScript blocks
 
+> `vals[<result_index>]`, `vars.<custom_var_name>` and `funcs.<custom_func_name>` are available in JavaScript blocks
+
 ````
 ```
-// returns a value
-return "x".length;
-``` // 2
+let s = "x";
+return s.length;
+```   // 1
+lx: $ // 1
 ````
 
 ````
-```js
-// returns a function - MUST HAVE A NAME
-return function double(x) {
-    return x * 2;
-}
+lx: \
 ```
-double(1)  // 2
+let s = "x";
+return s.length;
+```   // 1
+lx    // 1
+````
+
+````
+double(x): \
+```js
+return x * 2;
+```
+double(1) // 2
+````
+
+````
+# Fibonacci
+f: \
+```js
+
+// context for func                 
+let prev = 0;                       
+
+// func name for recursive calling  
+// instead of using `funcs._f`      
+return function _f(n, reset) {      
+
+    if (typeof n == "boolean") {    
+        reset = n;                  
+        n = undefined;              
+    }                               
+
+    if (reset) {                    
+        prev = 0;                   
+    }                               
+
+    if (n == undefined) {           
+        n = prev;                   
+        prev = prev + 1;            
+    }                               
+
+    if (n <= 0) return 0;           
+    if (n <= 2) return 1;           
+    return _f(n - 1) + _f(n - 2);   
+}                                   
+```
+
+f() // 0
+f() // 1
+f() // 1
+f() // 2
+f() // 3
+f() // 5
+
+f(true) // 0
+f() // 1
+f() // 1
+f() // 2
+f() // 3
+f() // 5
 ````
 
 ## settings
@@ -209,28 +266,9 @@ double(1)  // 2
 
 ## TODO
 
-- defining variables & functions via JavaScript blocks
+- display error/warning count (at top) and info on the right
 
-````
-lx: \
-```js
-return "x".length
-```
-````
-
-````
-// Fibonacci
-f(n): \
-```js
-if (n <= 0) return 0;
-if (n <= 2) return 1;
-return f(n - 1) + f(n - 2);
-```
-````
-
-- display error info at the page bottom
-    - display error count
-    - display error message for selected line
+- `try it yourself` in readme
 
 ## BUG
 
