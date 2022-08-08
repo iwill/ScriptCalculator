@@ -11,12 +11,6 @@
     
     TODO:
     
-    - config in script
-        _enable_ruler: true
-        _enable_underline: true
-        _config_decimal: 2
-        _config_rounding: floor
-    
     - ewiki shortcuts config, and help
     
     - refactor `calculate()` with RORO pattern
@@ -441,7 +435,7 @@
             output: `code = value // comment`
         }, ...] */
         let result = [], lineNumber = [], output = [];
-        let vals = [], vars = {}, funcs = {};
+        globalThis.vals = [], globalThis.vars = {}, globalThis.funcs = {};
         let multiLines = "", jsPrefix = "", jsBlock;
         let lines = script.split("\n");
         for (let ln = 0; ln < lines.length; ln++) { let line = lines[ln]; debugGroup(`#${ln} \`${line}\``, function() {
@@ -807,6 +801,10 @@
     }
     
     function updateRuler() {
+        if (vars._enable_ruler == false) {
+            $ruler.style.visibility = "hidden";
+            return;
+        }
         let script = $script.value;
         let start = $script.selectionStart;
         let end = script.indexOf("\n", start);
@@ -892,10 +890,13 @@
     
     globalThis.sthChanged = function sthChanged(event, target) { debugFunc(arguments, target.id);
         $roundingMethod.disabled = ($decimalPlaces.selectedIndex == 0);
-        updateRuler();
+        if (target == $script) {
+            updateRuler();
+        }
         clearTimeout(calculateTimeoutID);
         calculateTimeoutID = setTimeout(function _sthChanged() {
             calculate();
+            updateRuler();
         }, 1000);
         clearTimeout(serializeTimeoutID);
         serializeTimeoutID = setTimeout(function _sthChanged() {
