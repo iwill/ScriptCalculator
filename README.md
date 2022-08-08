@@ -240,7 +240,7 @@ return f(n - 1) + f(n - 2);
 
 ````
 ```js
-//        the cursor 👇🏿
+//         the caret 👇🏿
 for (let i = 0; i < 1;|) {
 }
 ```
