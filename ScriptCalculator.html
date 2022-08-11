@@ -976,9 +976,6 @@
                 }
             }
             else {
-                if (event.altKey) {
-                    return;
-                }
                 
                 if (script[start] == "\n" && start < end) {
                     start += 1;
@@ -1044,13 +1041,17 @@
                 
                 else if (keyName == "BracketLeft") {
                     selections = selections.map((line, index) => {
-                        return line + (event.shiftKey ? " " : "    ");
+                        return line + (event.shiftKey ? " " : " ".repeat(vars._indent_spaces || 4));
                     });
                 }
                 
                 else if (keyName == "BracketRight") {
                     selections = selections.map((line, index) => {
-                        return line.replace(event.shiftKey ? / $/ : / {0,4}$/, "");
+                        line = line.replace(new RegExp(`(.*?)( {1,${event.shiftKey ? 1 : vars._indent_spaces || 4}})$`), "$2$1");
+                        if (event.altKey) {
+                            line = line.replace(new RegExp(`^ {1,${event.shiftKey ? 1 : (vars._indent_spaces || 4)}}`), "");
+                        }
+                        return line;
                     });
                 }
                 
