@@ -11,6 +11,9 @@
     
     TODO:
     
+    - remove #underline?
+    - remove #reset?
+    
     - ewiki shortcuts config, and help
     
     - refactor `calculate()` with RORO pattern
@@ -361,12 +364,12 @@
             fn = src;
             src = undefined;
         }
-        let use_strict = (function() { return !this; })();
+        let use_strict = (() => !this)();
         if (use_strict) {
             fn && fn();
         }
         else {
-            let path = [_args.callee.caller?.name, _args.callee.name].filter(function(x) { return x; }).join(" > ");
+            let path = [_args.callee.caller?.name, _args.callee.name].filter((x) => x).join(" > ");
             if (src) {
                 path = `${src}.${path}`
             }
@@ -401,7 +404,7 @@
     }
     
     function commentIndex(line) {
-        let commentIndices = [line.indexOf("//"), (function() {
+        let commentIndices = [line.indexOf("//"), (() => {
             let commentMatches = [...line.matchAll(/#+\d*\s*/g)];
             if (commentMatches.length) {
                 let match = commentMatches[0];
@@ -510,7 +513,7 @@
                     if (!jsCode) {
                         /// inline js code
                         // `js` -> eval(js)
-                        code = code.replace(/`.*?`/g, function(js) {
+                        code = code.replace(/`.*?`/g, (js) => {
                             // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/Function#:~:text=the%20Function%20constructor%20creates%20functions%20which%20execute%20in%20the%20global%20scope%20only
                             return new Function("funcs", "vars", "vals", `"use strict"; return ${js.slice(1, -1)}`)(funcs, vars, vals);
                         });
@@ -577,7 +580,7 @@
                     if (!jsCode) {
                         /// validate functions and insert namespaces
                         // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
-                        code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, function(prefix) {
+                        code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, (prefix) => {
                             let name = prefix.slice(0, -1).trim();
                             if (["constructor", "prototype", "toSource", "valueOf", "eval"].includes(name)) {
                                 throw `invalid function call in \`${line}\``;
@@ -599,7 +602,7 @@
                         // !!!: cannot use `(?<!\.\s*)`, because Safari does not support negative-lookbehind-assertion
                         // code = code.replace(/(?<!\.\s*)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) { ... }
                         // !!!: replace `(?<!\.\s*)` with `\.?`, and return if matched a `.`
-                        code = code.replace(/\.?\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) {
+                        code = code.replace(/\.?\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, (k) => {
                             if (k.startsWith(".")) { return k; }
                             if (funcName && new RegExp(`\\b${k}\\b`).test(funcArgs)) {
                                 return k;
@@ -610,7 +613,7 @@
                         
                         /// replace `$` and `$x` with values
                         // `dollar [numbers] (no-sum|avg|min|max)`
-                        code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, function($x) {
+                        code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, ($x) => {
                             if ($x == "$") {
                                 return `(${vars.$})`;
                             }
@@ -621,7 +624,7 @@
                             return `(${vals[index]})`; // value or undefined
                         });
                         /// <👆🏿-use>: replace `👆 [color]` with values
-                        code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, function($x) {
+                        code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, ($x) => {
                             return `(${vars.$})`;
                         });
                         /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
@@ -636,7 +639,7 @@
                             code = code.slice(0, resToPercentage.index).trim();
                         }
                         /// input percentage
-                        code = code.replace(/(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g, function(pct) {
+                        code = code.replace(/(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g, (pct) => {
                             return `(${pct.replace(/\s*%/, "")} / 100)`;
                         });
                         
@@ -690,9 +693,7 @@
                 let type = typeof value;
                 if (type == "number") {
                     let decimalPlaces = Number($decimalPlaces.value);
-                    let rounding = decimalPlaces >= 0 && function(value, dp) {
-                        return Math[$roundingMethod.value](value, dp);
-                    };
+                    let rounding = decimalPlaces >= 0 && ((value, dp) => Math[$roundingMethod.value](value, dp));
                     if (rounding) {
                         value = rounding(value, decimalPlaces);
                     }
@@ -788,7 +789,7 @@
         let lnLength = vals.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
         
-        let errorsCount = result.reduce(function(obj, res) {
+        let errorsCount = result.reduce((obj, res) => {
             if (typeof res == "string") {
                 if (res.startsWith("ERROR")) obj.errors += 1;
                 else if (res.startsWith("WARNING")) obj.warnings += 1;
@@ -881,11 +882,7 @@
                 hash = hash.slice(0, match.index);
                 selection = { start: match[1] - selectionPlaceholder, end: match[2] - selectionPlaceholder };
             }
-            let json = tryCatch(function() {
-                return JSON.parse(hash);
-            }, function(e) {
-                return { script: hash };
-            });
+            let json = tryCatch(() => JSON.parse(hash), (e) => { script: hash });
             $decimalPlaces.selectedIndex = json.decimalPlaces || 0;
             // $fixedPoint.selectedIndex = json.fixedPoint;
             $roundingMethod.selectedIndex = json.roundingMethod || 0;
@@ -1138,9 +1135,7 @@
     });
     
     globalThis.scrollingChanged = function scrollingChanged(event, target) { // debugFunc(arguments, target.id);
-        [$script, $result, $lineNumber].forEach(function(e, i) {
-            e.scrollTop = target.scrollTop;
-        });
+        [$script, $result, $lineNumber].forEach((e, i) => e.scrollTop = target.scrollTop);
     };
     
     globalThis.copyOutputClicked = function copyOutputClicked(event, target) { debugFunc(arguments, function() {
