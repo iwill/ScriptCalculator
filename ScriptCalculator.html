@@ -940,12 +940,12 @@
     };
     
     globalThis.shortcutsTriggered = function shortcutsTriggered(event, target) {
-        if (document.activeElement != $script || event.metaKey || event.repeat || event.isComposing) {
+        if (document.activeElement != $script || event.metaKey || event.repeat || event.isComposing || /^(Meta|Control|Alt|Shift)/.test(event.code)) {
             return;
         }
-        const caseKeys = "KeyU", formatKeys = ["KeyL", "KeyR", "KeyM", "BracketLeft", "BracketRight"];
+        const helpKey = "Slash", configKey = "Comma", caseKey = "KeyU", formatKeys = ["KeyL", "KeyR", "KeyM", "BracketLeft", "BracketRight", "Slash"];
         let keyName = event.code;
-        if (!event.ctrlKey || !(keyName == caseKeys || formatKeys.includes(keyName))) {
+        if (!event.ctrlKey || !([helpKey, configKey, caseKey].includes(keyName) || formatKeys.includes(keyName))) {
             return;
         }
         debugFunc(arguments, target.id, function() {
@@ -954,7 +954,28 @@
             let start = $script.selectionStart, end = $script.selectionEnd;
             let selection;
             
-            if (keyName == caseKeys) {
+            if (keyName == helpKey && event.shiftKey) {
+                let help = `
+                    control+l: align script [l]eft
+                    control+r: align script [r]ight
+                    control+m: align script [m]iddle - trailing comments
+                    control+[/]: indent left or right
+                    control+/: comment/uncomment line
+                    control+,: insert config with default values
+                    control+shift+/: show this help
+                `.replace(/^\s*/mg, "");
+                alert(help);
+                return false;
+            }
+            else if (keyName == configKey) {
+                let config = `
+                     _enable_error: false // bool
+                     _enable_ruler:  true // bool
+                    _indent_spaces:     4 // +int
+                `.replace(/^\s*/mg, "");
+                selection = config;
+            }
+            else if (keyName == caseKey) {
                 if (start == end) {
                     let left = script.slice(0, start).match(/\w+$/);
                     if (left) {
@@ -1080,11 +1101,22 @@
                     });
                 }
                 
+                else if (keyName == "Slash") {
+                    selections = selections.map((line, index) => {
+                        if (line.startsWith("//")) {
+                            return line.replace(/^\/\/ ?/, "");
+                        }
+                        else {
+                            return "// " + line;
+                        }
+                    });
+                }
+                
                 selection = selections.join("\n");
             }
             
             $script.setSelectionRange(start, end);
-            document.execCommand("insertText", false, selection); // enable undo
+            document.execCommand("insertText", false, selection); // for undo
             end = start + selection.length;
             $script.setSelectionRange(start, end);
         });

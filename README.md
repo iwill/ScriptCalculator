@@ -255,6 +255,10 @@ f() // 5
         - keep leading spaces if press <kbd>option</kbd>
     - <kbd>control</kbd>+<kbd>/</kbd>: prepend/remove trailing `//` comments
 
+- other shortcuts:
+    - <kbd>control</kbd>+<kbd>,</kbd>: insert configurations with default values
+    - <kbd>control</kbd>+<kbd>shift</kbd>+<kbd>/</kbd>: show help
+
 - serialize script to url hash and deserialize
 
 - share with short url
