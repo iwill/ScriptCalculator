@@ -246,11 +246,14 @@ f() // 5
     - <kbd>control</kbd>+<kbd>option</kbd>+<kbd>u</kbd>: capitalize
 
 - format with shortcuts:
-    - <kbd>control</kbd>+<kbd>l</kbd>: align script left, appending spaces to the right, or prepend spaces to the left if press <kbd>shift</kbd>
+    - <kbd>control</kbd>+<kbd>l</kbd>: align script left, appending spaces to the right
+        - keep leading spaces if press <kbd>option</kbd>
+        - prepend spaces to the left if press <kbd>shift</kbd>
     - <kbd>control</kbd>+<kbd>r</kbd>: align script right, remove leading and trailing spaces
     - <kbd>control</kbd>+<kbd>m</kbd>: align script middle, align to trailing comments
-    - <kbd>control</kbd>+<kbd>[</kbd>: indent left with 4 spaces, or 1 space if press <kbd>shift</kbd>
-    - <kbd>control</kbd>+<kbd>]</kbd>: indent right with 4 spaces, or 1 space if press <kbd>shift</kbd>
+    - <kbd>control</kbd>+<kbd>[</kbd>/<kbd>]</kbd>: indent left/right with 4 spaces
+        - keep leading spaces if press <kbd>option</kbd>
+    - <kbd>control</kbd>+<kbd>/</kbd>: prepend/remove trailing `//` comments
 
 - serialize script to url hash and deserialize
 

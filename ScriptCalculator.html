@@ -1004,9 +1004,23 @@
                 }
                 
                 let selections = script.slice(start, end).split("\n");
+                
                 if (keyName == "KeyL") {
-                    let maxLength = selections.reduce((max, line) => Math.max(max, line.length), 0);
+                    let maxLength = selections.reduce((max, line) => {
+                        if (!event.altKey) {
+                            line = line.replace(/^ */, "");
+                        }
+                        return Math.max(max, line.length);
+                    }, 0);
+                    let spaces = vars._indent_spaces > 0 ? vars._indent_spaces : 4;
+                    let mod = maxLength % spaces;
+                    if (mod) {
+                        maxLength += (spaces - mod);
+                    }
                     selections = selections.map((line, index) => {
+                        if (!event.altKey) {
+                            line = line.replace(/^ */, "");
+                        }
                         let spaces = " ".repeat(maxLength - line.length);
                         return event.shiftKey ? spaces + line : line + spaces;
                     });
@@ -1017,17 +1031,22 @@
                 }
                 
                 else if (keyName == "KeyM") {
-                    let lengths = selections.reduce((array, line) => {
+                    let commentLengths = selections.reduce((array, line) => {
                         let index = commentIndex(line);
                         // return `-1` if `index == 0` to ignore whole-line comment
                         array.push(index < 0 ? 0 : index == 0 ? -1 : line.length - index);
                         return array;
                     }, []);
-                    let maxLength = lengths.reduce((max, length) => Math.max(max, length), 0);
+                    let maxLength = commentLengths.reduce((max, length) => Math.max(max, length), 0);
                     if (maxLength > 0) { // `if (maxLength > 0)` instead of `if (maxLength)`, because `maxLength` may be `-1`
-                        for (let i = 0; i < lengths.length; i++) {
+                        let spaces = vars._indent_spaces > 0 ? vars._indent_spaces : 4;
+                        let mod = maxLength % spaces;
+                        if (mod) {
+                            maxLength += (spaces - mod);
+                        }
+                        for (let i = 0; i < commentLengths.length; i++) {
                             let line = selections[i];
-                            let length = lengths[i];
+                            let length = commentLengths[i];
                             if (length < 0) {
                                 continue;
                             }
@@ -1041,15 +1060,21 @@
                 
                 else if (keyName == "BracketLeft") {
                     selections = selections.map((line, index) => {
-                        return line + (event.shiftKey ? " " : " ".repeat(vars._indent_spaces || 4));
+                        let spaces = vars._indent_spaces > 0 ? vars._indent_spaces : 4;
+                        line += " ".repeat(spaces);
+                        if (!event.altKey) {
+                            line = line.replace(new RegExp(`^ {1,${spaces}}`), "");
+                        }
+                        return line;
                     });
                 }
                 
                 else if (keyName == "BracketRight") {
                     selections = selections.map((line, index) => {
-                        line = line.replace(new RegExp(`(.*?)( {1,${event.shiftKey ? 1 : vars._indent_spaces || 4}})$`), "$2$1");
+                        let spaces = vars._indent_spaces > 0 ? vars._indent_spaces : 4;
+                        line = line.replace(new RegExp(`(.*?)( {1,${spaces}})$`), "$2$1");
                         if (event.altKey) {
-                            line = line.replace(new RegExp(`^ {1,${event.shiftKey ? 1 : (vars._indent_spaces || 4)}}`), "");
+                            line = line.replace(new RegExp(`^ {1,${spaces}}`), "");
                         }
                         return line;
                     });
