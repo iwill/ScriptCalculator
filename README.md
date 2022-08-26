@@ -183,7 +183,7 @@ f: \
 // context for func                 
 let prev = 0;                       
 
-// func name for recursive calling  
+// func name for recursive invocation  
 // instead of using `funcs._f`      
 return function _f(n, reset) {      
 
