@@ -656,7 +656,7 @@
                     // else: needs prepend `return` to `code` - `code` is math exp
                     let js = jsCode ? code : "return " + code; // `return` value
                     if (funcName) {
-                        js = `return ${funcArgs} => { ${js} }`; // `return` func
+                        js = `return function ${funcName}${funcArgs} { ${js} }`; // `return` func
                     }
                     console.log(`eval: ${js}`.replace(/%/g, "%%"));
                     let res = new Function("funcs", "vars", "vals", `"use strict"; ${js}`)(funcs, vars, vals);
