@@ -968,13 +968,13 @@
             
             if (keyName == helpKey && event.shiftKey) {
                 let help = `
-                    control+l:              align script [l]eft
-                    control+r:              align script [r]ight
-                    control+m:            align script [m]iddle - trailing comments
-                    control+[,]:            indent left or right
-                    control+/:               comment/uncomment line
-                    control+,:               insert config with default values
-                    control+shift+/:     show this help
+                    control + l                align script [l]eft
+                    control + r               align script [r]ight
+                    control + m              align script [m]iddle - trailing comments
+                    control + [ or ]         indent left or right
+                    control + /                comment/uncomment line
+                    control + ,                insert config with default values
+                    control + shift + /     show this help
                 `.replace(/^\s*/mg, "");
                 alert(help);
                 return false;
