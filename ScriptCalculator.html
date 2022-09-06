@@ -842,7 +842,16 @@
     
     let jsSerializeToHash = false;
     const selectionPlaceholder = 1000000;
-    const selectionRegExp = /(\d+)\|(\d+)$/;
+    
+    // TODO: `-?` and `.?` instead of `-` to backward compatible with `start|end`
+    const selectionRegExp = /-?(\d+).?(\d+)$/;
+    // const selectionRegExp = /-(\d+)-(\d+)$/;
+    
+    // base64 -> encode("+/=") -> "%2B%2F%3D"
+    // #see https://developer.mozilla.org/en-US/docs/Glossary/Base64#the_unicode_problem
+    // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent#encoding_for_content-disposition_and_link_headers
+    const encode = (x) => btoa(unescape(encodeURIComponent(x))).replace(/[\+\/=]/g, encodeURIComponent);
+    const decode = (x) => decodeURIComponent(escape(atob(x.replace(/%(?:2B|2F|3D)/g, decodeURIComponent))));
     
     function serializeToHash() { debugFunc(arguments, function() {
         let json = {};
@@ -858,13 +867,14 @@
         if ($script.value) {
             json.script = $script.value;
         }
-        let hash = Object.keys(json).length ? `#${encodeURIComponent(JSON.stringify(json))}` : "";
+        let hash = Object.keys(json).length ? `#${encode(JSON.stringify(json))}` : "";
         if (location.hash.replace(selectionRegExp, "") != hash) {
             jsSerializeToHash = true;
             location.hash = hash; // !!!: DONOT reset `jsSerializeToHash` here
         }
         if (location.hash) {
-            location.replace(`${hash}${$script.selectionStart + selectionPlaceholder}|${$script.selectionEnd + selectionPlaceholder}`);
+            let start = $script.selectionStart + selectionPlaceholder, end = $script.selectionEnd + selectionPlaceholder;
+            location.replace(`${hash}-${start}-${end}`);
         }
         updateBorderStyle();
     });}
@@ -875,13 +885,14 @@
             return;
         }
         debugFunc(arguments, function() {
-            let hash = decodeURIComponent(location.hash.slice(1));
+            let hash = location.hash.slice(1);
             let match = hash.match(selectionRegExp);
             let selection;
             if (match) {
                 hash = hash.slice(0, match.index);
                 selection = { start: match[1] - selectionPlaceholder, end: match[2] - selectionPlaceholder };
             }
+            hash = tryCatch(() => decode(hash), (e) => decodeURIComponent(hash)); // TODO: backward compatible
             let json = tryCatch(() => JSON.parse(hash), (e) => ({ script: hash }));
             $decimalPlaces.selectedIndex = json.decimalPlaces || 0;
             // $fixedPoint.selectedIndex = json.fixedPoint;
@@ -898,6 +909,7 @@
             }
         });
         calculate();
+        serializeToHash(); // update to latest version hash
     }
     
     let calculateTimeoutID = 0, serializeTimeoutID = 0;
@@ -953,13 +965,13 @@
             
             if (keyName == helpKey && event.shiftKey) {
                 let help = `
-                    control+l: align script [l]eft
-                    control+r: align script [r]ight
-                    control+m: align script [m]iddle - trailing comments
-                    control+[/]: indent left or right
-                    control+/: comment/uncomment line
-                    control+,: insert config with default values
-                    control+shift+/: show this help
+                    control+l:              align script [l]eft
+                    control+r:              align script [r]ight
+                    control+m:            align script [m]iddle - trailing comments
+                    control+[,]:            indent left or right
+                    control+/:               comment/uncomment line
+                    control+,:               insert config with default values
+                    control+shift+/:     show this help
                 `.replace(/^\s*/mg, "");
                 alert(help);
                 return false;
@@ -1149,8 +1161,8 @@
     
     globalThis.shareShortenedURL = function shareShortenedURL(event, target) { debugFunc(arguments, function() {
         // https://docs.github.com/en/rest/issues/issues#create-an-issue
-        let href = encodeURIComponent(location.href);
-        let base = encodeURIComponent(location.href.replace(/[?#].*/, ""));
+        let href = encode(location.href);
+        let base = encode(location.href.replace(/[?#].*/, ""));
         window.open(`https://github.com/iwill/url-db/issues/new?template=url-shortener-template.md&title=${base}&body=${href}`, "_blank");
     });};
     
