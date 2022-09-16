@@ -184,18 +184,6 @@
         color: darkgray;
         text-align: right;
     }
-    #output { /* cannot copy if display: none; or visibility: hidden; */
-        position: fixed;
-        right: 0;
-        bottom: 0;
-        width: 1px; /* cannot copy if 0 */
-        height: 1px; /* cannot copy if 0 */
-        margin: 0;
-        padding: 0;
-        resize: none;
-        border-style: none;
-        opacity: 0;
-    }
     .code {
         width: 100%;
         height: 100%;
@@ -266,7 +254,6 @@
     <div id="right" class="container">
         <textarea readonly id="result" class="code" onscroll="scrollingChanged(event, this)"></textarea>
         <textarea readonly id="lineNumber" class="code" tabindex="-1" onscroll="scrollingChanged(event, this)"></textarea>
-        <textarea readonly id="output" tabindex="-1"></textarea>
     </div>
 </body>
 <script type="text/javascript">
@@ -390,14 +377,14 @@
     let $right = document.querySelector("#right");
     let $result = $right.querySelector("#result");
     let $lineNumber = $right.querySelector("#lineNumber");
-    let $output = $right.querySelector("#output");
-    $output.remove(); // prevent finding by browser
     
     let $top = document.querySelector("#top");
     let $decimalPlaces = $top.querySelector("#decimalPlaces");
     // let $fixedPoint = $top.querySelector("#fixedPoint");
     let $roundingMethod = $top.querySelector("#roundingMethod");
     let $underline = $top.querySelector("#underline");
+    
+    let copyOutput = "";
     
     function validScopes(name) {
         let globalVar = ["Infinity", "NaN", "undefined",
@@ -788,7 +775,7 @@
         $result.value = result.join("\n");
         $lineNumber.value = lineNumber.join("\n");
         // 1. join lines with `\n`, 2. remove parentheses with single number, 3. remove leading space before `/\\$/mg`, 4. remove too many `\n`
-        $output.value = output.join("\n").replace(/\(\s*(\d*\.?\d*)\s*\)/g, "$1").replace(/^ +(?=\\$)/mg, "").replace(/\n{3,}/g, "\n\n");
+        copyOutput = output.join("\n").replace(/\(\s*(\d*\.?\d*)\s*\)/g, "$1").replace(/^ +(?=\\$)/mg, "").replace(/\n{3,}/g, "\n\n");
         
         let lnLength = vals.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
@@ -1155,12 +1142,7 @@
     };
     
     globalThis.copyOutputClicked = function copyOutputClicked(event, target) { debugFunc(arguments, function() {
-        $right.appendChild($output)
-        $output.focus();
-        $output.select();
-        document.execCommand("copy");
-        (target || $script).focus();
-        $output.remove();
+        navigator.clipboard.writeText(copyOutput).then(() => console.log("copied"), () => console.log("copied"));
     });};
     
     globalThis.shareShortenedURL = function shareShortenedURL(event, target) { debugFunc(arguments, function() {
