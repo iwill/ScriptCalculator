@@ -787,7 +787,8 @@
         // let fixed = result.map((name, index) => name ? Number(name).toFixed(2) : name);
         $result.value = result.join("\n");
         $lineNumber.value = lineNumber.join("\n");
-        $output.value = output.join("\n").replace(/^ +(?=\\$)/mg, "").replace(/\n{3,}/g, "\n\n");
+        // 1. join lines with `\n`, 2. remove parentheses with single number, 3. remove leading space before `/\\$/mg`, 4. remove too many `\n`
+        $output.value = output.join("\n").replace(/\(\s*(\d*\.?\d*)\s*\)/g, "$1").replace(/^ +(?=\\$)/mg, "").replace(/\n{3,}/g, "\n\n");
         
         let lnLength = vals.length.toString().length;
         document.documentElement.style.setProperty("--ln-width", Math.max(2, lnLength) * 10 + "px");
