@@ -571,6 +571,9 @@
                     }
                     
                     if (!jsCode) {
+                        /// auto insert `*` between number and others
+                        code = code.replace(/(\d)\s+(\w|_|\$|👆|\()/g, "$1 * $2");
+                        
                         /// validate functions and insert namespaces
                         // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
                         code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, (prefix) => {
