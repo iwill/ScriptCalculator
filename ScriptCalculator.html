@@ -1154,7 +1154,7 @@
     globalThis.shareShortenedURL = function shareShortenedURL(event, target) { debugFunc(arguments, function() {
         // https://docs.github.com/en/rest/issues/issues#create-an-issue
         let href = encode(location.href);
-        let base = encode(location.href.replace(/[?#].*/, ""));
+        let base = encodeURIComponent(location.href.replace(/[?#].*/, ""));
         window.open(`https://github.com/iwill/url-db/issues/new?template=url-shortener-template.md&title=${base}&body=${href}`, "_blank");
     });};
     
