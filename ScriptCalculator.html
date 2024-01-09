@@ -329,6 +329,23 @@
     
     Math.GR = Math.sqrt(1.25) - 0.5; // GoldenRatio
     
+    function isBuiltin(name) {
+        let _globalVars = [
+            "Infinity", "NaN", "undefined",
+            "isFinite", "isNaN", "parseFloat", "parseInt",
+            "Number", "BigInt"
+        ]; // just math related, NO "Boolean", "String", "Array", "Object", "Date", "RegExp"
+        return Math[name] || _globalVars.includes(name);
+    }
+    function builtinValue(name) {
+        let _globalVars = [
+            "Infinity", "NaN", "undefined",
+            "isFinite", "isNaN"// , "parseFloat", "parseInt",
+            // "Number", "BigInt"
+        ]; // NO functions
+        return Math[name] || (_globalVars.includes(name) ? globalThis[name] : undefined);
+    }
+    
     // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
     // tagged templates:
     // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
@@ -555,8 +572,8 @@
                     let funcRes = code.match(regExp);
                     if (funcRes) {
                         funcName = funcRes.groups.name;
-                        if (validScopes(funcName)) {
-                            throw `invalid function def in \`${line}\``;
+                        if (isBuiltin(funcName)) {
+                            throw `invalid function definition in \`${line}\``;
                         }
                         funcArgs = funcRes.groups.args;
                         code = code.slice(funcRes.index + funcRes[0].length).trim();
@@ -570,8 +587,8 @@
                     let varRes = code.match(/^\b[A-z_][A-z0-9_]*\s*\:/);
                     if (varRes) {
                         varName = varRes[0].slice(0, -1).trim();
-                        if (validScopes(varName)) {
-                            throw `invalid variable def in \`${line}\``;
+                        if (isBuiltin(varName)) {
+                            throw `invalid variable definition in \`${line}\``;
                         }
                         code = code.slice(varRes.index + varRes[0].length).trim();
                     }
@@ -604,12 +621,20 @@
                         // !!!: cannot use `(?<!\.\s*)`, because Safari does not support negative-lookbehind-assertion
                         // code = code.replace(/(?<!\.\s*)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) { ... }
                         // !!!: replace `(?<!\.\s*)` with `\.?`, and return if matched a `.`
-                        code = code.replace(/\.?\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, (k) => {
+                        // 
+                        let regExp = RegExp.make`
+                            \.?                 # 匹配到 "." 则 "return"，前边没有 "." 才继续
+                            \b
+                            [A-z_][A-z0-9_]*    # 合法变量名
+                            (?! \s* [.:(])      # 后面没有 "."、":"、"("
+                            \b
+                            ${"g"}`
+                        code = code.replace(regExp, (k) => {
                             if (k.startsWith(".")) { return k; }
                             if (funcName && new RegExp(`\\b${k}\\b`).test(funcArgs)) {
                                 return k;
                             }
-                            let v = validScopes(k) || vars[k]; // `vars[k]` at last, because the value maybe `0`
+                            let v = isBuiltin(k) ? builtinValue(k) : vars[k]; // `vars[k]` at last, because the value maybe `0`
                             return `(${v !== undefined ? v : k})`;
                         });
                         
