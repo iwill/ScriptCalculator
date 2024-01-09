@@ -263,9 +263,8 @@
     </div>
 </body>
 <script type="text/javascript">
+"use strict";
 (function onload(undefined) {
-    // "use strict";
-    
     for (let method of ["round", "floor", "ceil"]) {
         let _method = "_" + method;
         Math[_method] = Math[method];
@@ -348,6 +347,9 @@
     
     // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
     // tagged templates:
+    //      RegExp.make`^[A-z0-9_]*${"img"}` => /^[A-z0-9_]*/img
+    //      RegExp.make`^[A-z0-9_]*${""}`    => /^[A-z0-9_]*/
+    //      RegExp.make`^[A-z0-9_]*`         => /^[A-z0-9_]*/
     // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
     // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
     RegExp.make = (regExp, opts) => new RegExp(regExp.raw[0].replace(/( #.*|\s)/mg, ""), opts || "");
@@ -409,27 +411,27 @@
     
     let copyOutput = "";
     
-    function validScopes(name) {
-        let globalVar = ["Infinity", "NaN", "undefined",
-            "isFinite", "isNaN", "parseFloat", "parseInt",
-            "Number", "BigInt"]; // only math related, NO "Boolean", "String", "Array", "Object", "Date", "RegExp"
-        return Math[name] || (globalVar.includes(name) ? globalThis[name] : undefined);
-    }
-    
     function commentIndex(line) {
-        let commentIndices = [line.indexOf("//"), (() => {
-            let commentMatches = [...line.matchAll(/#+\d*\s*/g)];
-            if (commentMatches.length) {
-                let match = commentMatches[0];
-                if (!/#\d+/.test(match[0])) {
-                    return match.index;
+        let commentIndices = [
+            line.indexOf("//"),
+            (() => {
+                // TODO: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll#regexp.prototype.exec_and_matchall
+                // TODO: config.match(/(?<==)(INACTIVE|NOCODE|OPEN|TEMP|TEST|TODO:.+|UNSUPPORTED:.+)\s*$/g)[0]
+                // Array.from(str.matchAll(regexp), (m) => m[0]);
+                // Array.from(str.matchAll(regexp), (m) => `${regexp.lastIndex} ${m[0]}`);
+                let commentMatches = [...line.matchAll(/#+\d*\s*/g)];
+                if (commentMatches.length) {
+                    let match = commentMatches[0];
+                    if (!/#\d+/.test(match[0])) {
+                        return match.index;
+                    }
+                    else if ((match = commentMatches[1])) {
+                        return match.index;
+                    }
                 }
-                else if ((match = commentMatches[1])) {
-                    return match.index;
-                }
-            }
-            return -1;
-        })()].filter((x) => x >= 0);
+                return -1;
+            })()
+        ].filter((x) => x >= 0);
         let commentIndex = Math.min(...commentIndices);
         return commentIndex == Infinity ? -1 : commentIndex;
     }
@@ -541,9 +543,21 @@
                         if (/['"`\\\[\];]/g.test(code)) {
                             throw `invalid symbol in \`${line}\``;
                         }
-                        // !!!: cannot use `/((?<!\w\s*\(\s*)\{|\}(?!\s*\)))/g`, because Safari does not support negative-lookbehind-assertion
-                        // - no `(` before `\w\s*{` - does not support yet
-                        // - after `}` no `)`
+                        // !!!: cannot use this regExp, because Safari and Swift does not support negative-lookbehind-assertion
+                        // #see https://stackoverflow.com/a/2973495/456536
+                        // let regExp = RegExp.make`
+                        //     (
+                        //         (?<! \w \s* \( \s* ) \{
+                        //         |
+                        //         \} (?! \s* \) )
+                        //     )
+                        // `
+                        // 匹配
+                        //     - 前边没有 `\w\(` 的 `{`
+                        // 或
+                        //     - 后边没有    `)` 的 `}`
+                        // 禁止 `{}` 符号，但允许 `f({})`
+                        // 以便支持 RORO 参数，例如定义函数 `add({ a, b }): a + b`、调用函数 `add({ a: 4, b: 5 })`
                         if (/\}(?!\s*\))/g.test(code)) {
                             throw `invalid symbol in \`${line}\``;
                         }
@@ -568,7 +582,7 @@
                             \}?\s* \)
                         ) \s*
                         \:
-                    ${""/* "img" */}`;
+                        ${/* opts: "" or "img" */""}`; // #see RegExp.make
                     let funcRes = code.match(regExp);
                     if (funcRes) {
                         funcName = funcRes.groups.name;
@@ -578,7 +592,7 @@
                         funcArgs = funcRes.groups.args;
                         code = code.slice(funcRes.index + funcRes[0].length).trim();
                         if (!code) {
-                            throw `invalid function def in \`${line}\``;
+                            throw `invalid function definition in \`${line}\``;
                         }
                     }
                     
