@@ -220,7 +220,7 @@
         <div style="position: absolute; left: 0; top: 0; padding: var(--space) 0;">
             <h1 id="title">ScriptCalculator by <a target="_blank" href="https://iwill.im/">Míng</a></h1>
             [ <a target="_blank" href="https://github.com/iwill/ScriptCalculator">GitHub</a>
-            | <a target="_blank" href="#eyJzY3JpcHQiOiIjIFNjcmlwdENhbGN1bGF0b3JcblxuXG4jIyBRdWljayBTdGFydCB8IOeugOWNleW6lOeUqFxuXG4xICsgMlxuLSAxXG4qIDVcbiogMTAlXG5cblxuIyMgVmFyaWFibGVzIHwg5Y%2BY6YePXG5cbiQgKyAkMyArICQtMSArIPCfkYbwn4%2B%2FXG49PSAxICsgIDEgKyAgMSAgKyAgMVxuXG5hOiAxXG5iOiAyXG5hICsgYlxuXG5cbiMjIEZ1bmN0aW9ucyB8IOWHveaVsFxuXG5hZGQoeCwgeSk6IHggKyB5XG5hZGQoMSwgMilcblxuXG4jIyBKYXZhU2NyaXB0IHwg5Luj56CBXG5cbmBsb2NhdGlvbi5ocmVmLmxlbmd0aGBcbi0gYGxvY2F0aW9uLmhhc2gubGVuZ3RoYFxuXG4vLyBGaWJvbmFjY2lcbmYobik6IGBgYGpzXG5pZiAobiA8PSAwKSByZXR1cm4gMDsgICAgICAgXG5pZiAobiA8PSAyKSByZXR1cm4gMTsgICAgICAgXG5yZXR1cm4gZihuIC0gMSkgKyBmKG4gLSAyKTsgXG5gYGBcblxuZigwKVxuZigxKVxuZigyKVxuXG4kc3VtKC0zLCAtMSlcblxuXG4jIyBBbmQgbWFueSBtb3JlIHwg5pu05aSa5aW955So55qE5Yqf6IO95LuL57uN55yL6L%2BZ6YeMIPCfkYfwn4%2B%2FXG5cbi8vIGh0dHBzOi8vZ2l0aHViLmNvbS9pd2lsbC9TY3JpcHRDYWxjdWxhdG9yI3JlYWRtZVxuXG4ifQ%3D%3D-1000002-1000018">Demo</a>
+            | <a target="_blank" href="#eyJzY3JpcHQiOiIjIFNjcmlwdENhbGN1bGF0b3JcblxuXG4jIyBRdWljayBTdGFydCB8IOeugOWNleW6lOeUqFxuXG4xICsgMlxuLSAxXG4qIDVcbiogMTAlXG5cblxuIyMgVmFyaWFibGVzIHwg5Y%2BY6YePXG5cbiQgKyAkMyArIPCfkYbwn4%2B%2FICsgJCRcbj09IDEgKyAgMSArIDEgKyAxMFxuXG5hOiAxXG5iOiAyXG5hICsgYlxuXG5cbiMjIEZ1bmN0aW9ucyB8IOWHveaVsFxuXG5hZGQoeCwgeSk6IHggKyB5XG5hZGQoMSwgMilcblxuXG4jIyBKYXZhU2NyaXB0IHwg5Luj56CBXG5cbmBsb2NhdGlvbi5ocmVmLmxlbmd0aGBcbi0gYGxvY2F0aW9uLmhhc2gubGVuZ3RoYFxuXG4vLyBGaWJvbmFjY2lcbmYobik6IGBgYGpzXG5pZiAobiA8PSAwKSByZXR1cm4gMDsgICAgICAgXG5pZiAobiA8PSAyKSByZXR1cm4gMTsgICAgICAgXG5yZXR1cm4gZihuIC0gMSkgKyBmKG4gLSAyKTsgXG5gYGBcblxuZigwKVxuZigxKVxuZigyKVxuXG4kc3VtKC0zLCAtMSlcblxuXG4jIyBBbmQgbWFueSBtb3JlIHwg5pu05aSa5aW955So55qE5Yqf6IO95LuL57uN55yL6L%2BZ6YeMIPCfkYfwn4%2B%2FXG5cbi8vIGh0dHBzOi8vZ2l0aHViLmNvbS9pd2lsbC9TY3JpcHRDYWxjdWxhdG9yI3JlYWRtZVxuXG4ifQ%3D%3D-1000002-1000018">Demo</a>
             | <a target="_blank" href="https://iwill.im/2022/07/08/script-calculator/">Help</a>
             ]
         </div>
@@ -638,23 +638,27 @@
                             return `(${v !== undefined ? v : k})`;
                         });
                         
-                        /// replace `$` and `$x` with values
+                        /// replace `$`, `$$`, ... and `$x` with values
                         // `dollar [numbers] (no-sum|avg|min|max)`
-                        code = code.replace(/\$-?\d*(?!(sum|avg|min|max))/g, ($x) => {
+                        code = code.replace(/\$\$+(?!(sum|avg|min|max))/g, ($x) => {
+                            let index = - $x.length;
+                            if (index < 0) {
+                                index = vals.length + index;
+                            }
+                            return `(${vals[index]})`; // value or undefined
+                        });
+                        code = code.replace(/\$\d*(?!(sum|avg|min|max))/g, ($x) => {
                             if ($x == "$") {
                                 return `(${vars.$})`;
                             }
                             let index = Number($x.slice(1));
-                            if (index < 0) {
-                                index = vals.length + index;
-                            }
                             return `(${vals[index]})`; // value or undefined
                         });
                         /// <👆🏿-use>: replace `👆 [color]` with values
                         code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, ($x) => {
                             return `(${vars.$})`;
                         });
-                        /// prepend `$` if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
+                        /// auto-prepend `$`, if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
                         let prevRes = result[result.length - 1]; // if prev line has res, then prepend prev value - vars.$
                         if ((prevRes || prevRes === 0 || prevRes === false) && prevRes != "ERROR" && code.length && code.match(/^([^~!\(\w\$👆]|!=)+/u)) {
                             code = `(${vars.$}) ${code}`;

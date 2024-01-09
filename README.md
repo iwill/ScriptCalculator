@@ -21,10 +21,10 @@ En | [中文](https://iwill.im/2022/07/08/script-calculator/)
        // empty line
    * 4 // ERROR       | the previous line is empty
 
-$0 / 2 //  6 / 2 == 3 | $0  is 6 - the result of the 0th line
+$0 / 2 //  6 / 2 == 3 | $0 is 6 - the result of the 0th line
        // empty line
-10 % $ // 10 / 3 == 1 | $   is 3 - the previous result, not "the result of the previous line"
-   $-2 //        == 3 | $-2 is 3 - the 2nd-to-last result
+10 % $ // 10 / 3 == 1 |  $ is 3 - the previous result, not "the result of the previous line"
+    $$ //        == 3 | $$ is 3 - the 2nd-to-last result
 ```
 
 - percentage: `%` if it's NOT followed by `number`, `variable`, `function` or `(`
