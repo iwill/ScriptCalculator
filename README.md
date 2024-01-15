@@ -86,9 +86,9 @@ GR // 0.6180339887498949
 ```
 
 ```
-Number.MAX_SAFE_INTEGER // 9007199254740991
+MAX_SAFE_INTEGER        // 9007199254740991
   == pow(2, 53) - 1     // true
-Number.MIN_SAFE_INTEGER // -9007199254740991
+MIN_SAFE_INTEGER        // -9007199254740991
   == - (pow(2, 53) - 1) // true
 ```
 

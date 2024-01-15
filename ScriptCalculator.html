@@ -68,7 +68,7 @@
         --space-l: 8px;
         --space: 5px;
         --top-height: 35px;
-        --right-width: 25%;
+        --right-width: 32%; /* 25% */
         --ln-width: 20px;
     }
     
@@ -277,8 +277,8 @@
         };
     }
     
-    Math.$sum = function(values, from, till) {
-        let length = values.length;
+    Math.$sum = function(from, till) {
+        let length = vals.length;
         if (from < 0) from = length + from;
         else if (from === undefined) from = 0;
         if (till < 0) till = length + till;
@@ -286,42 +286,42 @@
         if (from > till) [from, till] = [till, from];
         let sum = 0;
         for (let i = from; i <= till; i++) {
-            sum += values[i];
+            sum += vals[i];
         }
         return sum;
     };
-    Math.$avg = function(values, from, till) {
-        let length = values.length;
+    Math.$avg = function(from, till) {
+        let length = vals.length;
         if (from < 0) from = length + from;
         else if (from === undefined) from = 0;
         if (till < 0) till = length + till;
         else if (till === undefined || till >= length) till = length - 1;
         if (from > till) [from, till] = [till, from];
-        return this.$sum(values, from, till) / (till - from + 1);
+        return this.$sum(from, till) / (till - from + 1);
     };
-    Math.$min = function(values, from, till) {
-        let length = values.length;
+    Math.$min = function(from, till) {
+        let length = vals.length;
         if (from < 0) from = length + from;
         else if (from === undefined) from = 0;
         if (till < 0) till = length + till;
         else if (till === undefined || till >= length) till = length - 1;
         if (from > till) [from, till] = [till, from];
-        let min = values[from];
+        let min = vals[from];
         for (let i = from + 1; i <= till; i++) {
-            min = this.min(min, values[i]);
+            min = this.min(min, vals[i]);
         }
         return min;
     };
-    Math.$max = function(values, from, till) {
-        let length = values.length;
+    Math.$max = function(from, till) {
+        let length = vals.length;
         if (from < 0) from = length + from;
         else if (from === undefined) from = 0;
         if (till < 0) till = length + till;
         else if (till === undefined || till >= length) till = length - 1;
         if (from > till) [from, till] = [till, from];
-        let max = values[from];
+        let max = vals[from];
         for (let i = from + 1; i <= till; i++) {
-            max = this.max(max, values[i]);
+            max = this.max(max, vals[i]);
         }
         return max;
     };
@@ -329,30 +329,65 @@
     Math.GR = Math.sqrt(1.25) - 0.5; // GoldenRatio
     
     function isBuiltin(name) {
-        let _globalVars = [
-            "Infinity", "NaN", "undefined",
+        return !!Math[name] || globalThis[name] !== undefined || name === "undefined";
+    }
+    function isValidGlobalFunc(name) {
+        return [
             "isFinite", "isNaN", "parseFloat", "parseInt",
             "Number", "BigInt"
-        ]; // just math related, NO "Boolean", "String", "Array", "Object", "Date", "RegExp"
-        return Math[name] || _globalVars.includes(name);
+        ].includes(name);
+    }
+    function isValidBuiltinValue(name) {
+        return (Object.getOwnPropertyNames(Number).filter((key) => /^[A-Z][A-Z0-9_]*$/.test(key)).includes(name)
+                || Object.getOwnPropertyNames(Math).filter((key) => /^[A-Z][A-Z0-9_]*$/.test(key)).includes(name)
+                || ["Infinity", "NaN", "undefined"].includes(name));
     }
     function builtinValue(name) {
-        let _globalVars = [
-            "Infinity", "NaN", "undefined",
-            "isFinite", "isNaN"// , "parseFloat", "parseInt",
-            // "Number", "BigInt"
-        ]; // NO functions
-        return Math[name] || (_globalVars.includes(name) ? globalThis[name] : undefined);
+        if (Object.getOwnPropertyNames(Number).filter((name) => /^[A-Z][A-Z0-9_]*$/.test(name)).includes(name)) {
+            return Number[name];
+        }
+        if (Object.getOwnPropertyNames(Math).filter((name) => /^[A-Z][A-Z0-9_]*$/.test(name)).includes(name)) {
+            return Math[name];
+        }
+        if (["Infinity", "NaN", "undefined"].includes(name)) {
+            return globalThis[name];
+        }
+        return undefined;
     }
     
-    // let regExp = /^(?<name>[A-z_][A-z0-9_]*)\s*(?<args>\((\s*[A-z_][A-z0-9_]*\s*(,\s*[A-z_][A-z0-9_]*\s*)*)?\))\:/;
+    // let regExp = /^(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*(?<args>\((\s*[A-Za-z_][A-Za-z0-9_]*\s*(,\s*[A-Za-z_][A-Za-z0-9_]*\s*)*)?\))\:/;
     // tagged templates:
-    //      RegExp.make`^[A-z0-9_]*${"img"}` => /^[A-z0-9_]*/img
-    //      RegExp.make`^[A-z0-9_]*${""}`    => /^[A-z0-9_]*/
-    //      RegExp.make`^[A-z0-9_]*`         => /^[A-z0-9_]*/
+    //      RegExp.make`^[A-Za-z0-9_]*${"img"}` => /^[A-Za-z0-9_]*/img
+    //      RegExp.make`^[A-Za-z0-9_]*${""}`    => /^[A-Za-z0-9_]*/
+    //      RegExp.make`^[A-Za-z0-9_]*`         => /^[A-Za-z0-9_]*/
     // #see https://stackoverflow.com/questions/12317049/how-to-split-a-long-regular-expression-into-multiple-lines-in-javascript/12317105#12317105
     // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
     RegExp.make = (regExp, opts) => new RegExp(regExp.raw[0].replace(/( #.*|\s)/mg, ""), opts || "");
+    
+    /// 7 Arithmetic, Remainder and Parentheses Operators
+    /// + - * / % ( )
+    /// 6 Comparison Operators
+    /// < <= > >= == !=
+    /// 7 Bitwise Operators
+    /// & | ~ ^ << >> >>>
+    /// 4 Logical Operators
+    /// && || ! ?:
+    
+    /// Unary(Un), Binary(Bi) and Ternary(Ter)
+    const BI_TER_OPERATORS_START = RegExp.make`^(
+        [ \+ \- \* \/ \% ] | \*\* # NO ( and )
+        | [ \& \| \^ ]     | \<\<  | \>\> | \>\>\> # NO ~
+        | [ \< \> ]        | \<\=  | \>\= | \=\= | \!\=
+                           | \&\&  | \|\| | \? .* \: # NO !
+                           | \#\d+ | \%\%
+    )`;
+    // const NOT_BI_TER_OPERATORS_START = RegExp.make`^(?!
+    //     [ \+ \- \* \/ \% ] | \*\*
+    //     | [ \& \| \^ ] | \<\<  | \>\> | \>\>\>
+    //     | [ \< \> ]    | \<\=  | \>\= | \=\= | \!\=
+    //                    | \&\&  | \|\| | \? .* \:
+    //                    | \#\d+ | \%\%
+    // )`;
     
     function tryCatch(f1, f2) {
         try {
@@ -454,8 +489,8 @@
             output: `code = value // comment`
         }, ...] */
         let result = [], lineNumber = [], output = [];
-        globalThis.vals = [], globalThis.vars = {}, globalThis.funcs = {};
-        let multiLines = "", jsPrefix = "", jsBlock;
+        globalThis.funcs = {}, globalThis.vars = {}, globalThis.vals = [];
+        let multiLines = "", jsBlock;
         let lines = script.split("\n");
         for (let ln = 0; ln < lines.length; ln++) { let line = lines[ln]; debugGroup(`#${ln} \`${line}\``, function() {
             
@@ -493,32 +528,35 @@
                 }
                 
                 /// js blocks
-                let jsStarts = code.match(/^(.*:)?\s*```\s*\w*\s*$/), jsEnds = code.endsWith("```");
+                let jsStarts = code.match(/^(.*)```\s*\w*\s*$/), jsEnds = code.endsWith("```");
                 let jsCode = false;
                 if (jsBlock === undefined) {
                     if (jsStarts) {
                         if (multiLines) {
-                            throw `invalid symbol in \`${line}\``;
+                            throw `invalid blcok start \`\`\` in \`${line}\``;
                         }
-                        jsBlock = "";
-                        jsPrefix = code.replace(/```\s*\w*\s*$/, "");
+                        jsBlock = jsStarts[1] || "";
                         code = "";
                     }
+                    // NEVER
                     else if (jsEnds) {
-                        throw `invalid symbol in \`${line}\``;
+                        throw `invalid block end \`\`\` in \`${line}\``;
                     }
+                    // else NOT block
                 }
                 else { // if (jsBlock)
                     if (!jsEnds) {
                         if (jsStarts) {
-                            throw `invalid symbol in \`${line}\``;
+                            throw `invalid block start \`\`\` in \`${line}\``;
                         }
                         jsBlock += "\t" + code;
                         code = "";
                     }
                     else { // if (jsEnds)
-                        code = jsPrefix + jsBlock + "\t" + code.replace(/```$/, "");
-                        jsPrefix = "";
+                        if (code != "```") {
+                            throw `invalid block end \`\`\` in \`${line}\``;
+                        }
+                        code = jsBlock;
                         jsBlock = undefined;
                         jsCode = true;
                     }
@@ -526,18 +564,21 @@
                 
                 if (code) {
                     if (!jsCode) {
-                        /// inline js code
+                        /// replace inline js code with its returned value
                         // `js` -> eval(js)
                         code = code.replace(/`.*?`/g, (js) => {
                             // #see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/Function#:~:text=the%20Function%20constructor%20creates%20functions%20which%20execute%20in%20the%20global%20scope%20only
-                            return new Function("funcs", "vars", "vals", `"use strict"; return ${js.slice(1, -1)}`)(funcs, vars, vals);
+                            return (new Function(`"use strict"; return ${js.slice(1, -1)};`))();
                         });
+                        console.debug(`01: code: ${code}`);
                         
                         /// replace `＋－×÷＝` with `+-*/=`
                         code = code.replace(/＋/g, "+").replace(/－/g, "-").replace(/×/g, "*").replace(/÷/g, "/").replace(/＝/g, "=");
+                        console.debug(`02: code: ${code}`);
                         
                         /// replace single = with ==
                         code = code.replace(/(^|[^<!=>])=(?!=)/g, "$1==");
+                        console.debug(`03: code: ${code}`);
                         
                         /// validate symbols
                         if (/['"`\\\[\];]/g.test(code)) {
@@ -561,28 +602,30 @@
                         if (/\}(?!\s*\))/g.test(code)) {
                             throw `invalid symbol in \`${line}\``;
                         }
-                        // `dot [spaces] (word-start) (no-number) words (word-end) [spaces] left-parenthesis` // `.xx(`
-                        if (/\.\s*[A-z_][A-z0-9_]*\s*\(/g.test(code)) {
+                        
+                        /// prevent namespaces
+                        // `xx.` || `.xx`
+                        if (/\b[A-Za-z_][A-Za-z0-9_]*\s*\./g.test(code) || /\.\s*[A-Za-z_]/g.test(code)) {
                             throw `invalid dot in \`${line}\``;
                         }
                     }
                     
-                    /// find functions
+                    /// find functions definition
                     // `fun({?[arg0[, argN]*]?}?):` // supports roro args https://www.tinyblog.dev/blog/2020-07-13-javascript-roro-pattern/
-                    // `[A-z_][A-z0-9_]*` == `\b(?!\d)\w+\b`
+                    // `[A-Za-z_][A-Za-z0-9_]*` == `\b(?!\d)\w+\b`
                     let regExp = RegExp.make`
                         ^ \s*
-                        (?<name> \b[A-z_][A-z0-9_]* ) \s*
+                        (?<name> \b[A-Za-z_][A-Za-z0-9_]* ) \s*
                         (?<args>
                             \(\s* \{? \s*
                             (
-                                      \b[A-z_][A-z0-9_]* \s*
-                                (,\s* \b[A-z_][A-z0-9_]* \s* )*
+                                      \b[A-Za-z_][A-Za-z0-9_]* \s*
+                                (,\s* \b[A-Za-z_][A-Za-z0-9_]* \s* )*
                             )?
                             \}?\s* \)
                         ) \s*
-                        \:
-                        ${/* opts: "" or "img" */""}`; // #see RegExp.make
+                        \: \s*
+                    ${/* opts: "" or "img" */""} # #see RegExp.make `;
                     let funcRes = code.match(regExp);
                     if (funcRes) {
                         funcName = funcRes.groups.name;
@@ -590,15 +633,16 @@
                             throw `invalid function definition in \`${line}\``;
                         }
                         funcArgs = funcRes.groups.args;
-                        code = code.slice(funcRes.index + funcRes[0].length).trim();
+                        code = code.slice(funcRes.index + funcRes[0].length);
                         if (!code) {
                             throw `invalid function definition in \`${line}\``;
                         }
                     }
+                    console.debug(`04: code: ${code}`);
                     
-                    /// find variables
+                    /// find variables definition
                     // `(word-start) (no-number) words (word-end) colon`
-                    let varRes = code.match(/^\b[A-z_][A-z0-9_]*\s*\:/);
+                    let varRes = code.match(/^\b[A-Za-z_][A-Za-z0-9_]*\s*\:/);
                     if (varRes) {
                         varName = varRes[0].slice(0, -1).trim();
                         if (isBuiltin(varName)) {
@@ -606,94 +650,110 @@
                         }
                         code = code.slice(varRes.index + varRes[0].length).trim();
                     }
+                    console.debug(`05: code: ${code}`);
                     
                     if (!jsCode) {
-                        /// auto insert `*` between number and others
-                        code = code.replace(/(\d)\s+(\w|_|\$|👆|\()/g, "$1 * $2");
+                        /// auto insert `*` between number and other expr
+                        code = code.replace(/(\d)\s+([A-Za-z_\$\(👆👆🏻👆🏼👆🏽👆🏾👆🏿])/g, "$1 * $2");
+                        console.debug(`06: code: ${code}`);
                         
                         /// validate functions and insert namespaces
                         // `(word-start) (no-number) words (word-end) [spaces] (left-parenthesis)`
-                        code = code.replace(/\$?\b[A-z_][A-z0-9_]*\s*\(/g, (prefix) => {
+                        code = code.replace(/\$?[A-Za-z_][A-Za-z0-9_]*\s*\(/g, (prefix) => {
                             let name = prefix.slice(0, -1).trim();
                             if (["constructor", "prototype", "toSource", "valueOf", "eval"].includes(name)) {
-                                throw `invalid function call in \`${line}\``;
+                                throw `invalid function \`${name}\` in \`${line}\``;
                             }
                             let namespace;
-                            if (typeof funcs[name] == "function" || name == funcName) namespace = "funcs";
-                            else if (typeof Math[name] == "function")  namespace = "Math";
-                            else if (typeof globalThis[name] == "function") namespace = "globalThis";
-                            else throw `invalid function call in \`${line}\``;
-                            prefix = `${namespace}.${name}(`;
-                            if (name.startsWith("$")) { // for `$sum`, ...
-                                prefix += "vals, "
-                            }
-                            return prefix;
+                            if (typeof funcs[name] == "function" || name == funcName)   namespace = "funcs";
+                            else if (typeof Math[name] == "function")                   namespace = "Math"; // just Math, no Number
+                            else if (isValidGlobalFunc(name))                           namespace = "globalThis";
+                            else throw `invalid function \`${name}\` in \`${line}\``;
+                            return `${namespace}.${name}(`;
                         });
+                        console.debug(`07: code: ${code}`);
                         
                         /// replace variables with values
-                        // `(no-dot) (word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
-                        // !!!: cannot use `(?<!\.\s*)`, because Safari does not support negative-lookbehind-assertion
-                        // code = code.replace(/(?<!\.\s*)\b[A-z_][A-z0-9_]*(?!\s*[.:(])\b/g, function(k) { ... }
-                        // !!!: replace `(?<!\.\s*)` with `\.?`, and return if matched a `.`
-                        // 
+                        // `(word-start) (no-number) words (word-end) (no- [spaces] (dot)(colon)(left-parenthesis))`
                         let regExp = RegExp.make`
-                            \.?                 # 匹配到 "." 则 "return"，前边没有 "." 才继续
                             \b
-                            [A-z_][A-z0-9_]*    # 合法变量名
-                            (?! \s* [.:(])      # 后面没有 "."、":"、"("
+                            [A-Za-z_][A-Za-z0-9_]*
+                            (?! \s* [\:\(])       # 后面有 ":" 的是 RORO 函数中的 argument label、有 "(" 的 function
                             \b
-                            ${"g"}`
-                        code = code.replace(regExp, (k) => {
-                            if (k.startsWith(".")) { return k; }
-                            if (funcName && new RegExp(`\\b${k}\\b`).test(funcArgs)) {
-                                return k;
+                        ${"g"}`;
+                        code = code.replace(/\b[A-Za-z_][A-Za-z0-9_]*(?!\s*[.:(])\b/g, (name) => {
+                            if (funcName && new RegExp(`\\b${name}\\b`).test(funcArgs)) {
+                                return name;
                             }
-                            let v = isBuiltin(k) ? builtinValue(k) : vars[k]; // `vars[k]` at last, because the value maybe `0`
-                            return `(${v !== undefined ? v : k})`;
+                            if (["constructor", "prototype", "toSource", "valueOf", "eval"].includes(name)) {
+                                throw `invalid variable \`${name}\` in \`${line}\``;
+                            }
+                            let value = isValidBuiltinValue(name) ? builtinValue(name) : vars[name];
+                            if (value === undefined) {
+                                if (globalThis[name] !== undefined) {
+                                    throw `invalid variable \`${name}\` in \`${line}\``;
+                                }
+                                else {
+                                    value = name; // for `false`, and?
+                                }
+                            }
+                            return `(${value})`;
                         });
+                        console.debug(`08: code: ${code}`);
                         
                         /// replace `$`, `$$`, ... and `$x` with values
                         // `dollar [numbers] (no-sum|avg|min|max)`
-                        code = code.replace(/\$\$+(?!(sum|avg|min|max))/g, ($x) => {
-                            let index = - $x.length;
-                            if (index < 0) {
-                                index = vals.length + index;
+                        code = code.replace(/(\$+(?!sum|avg|min|max)|[👆👆🏻👆🏼👆🏽👆🏾👆🏿]+)(?!\d)/g, ($x) => {
+                            let value = vals[vals.length - $x.match(/(\$|👆)/gu).length];
+                            if (value === undefined) {
+                                throw `invalid variable \`${name}\` in \`${line}\``;
                             }
-                            return `(${vals[index]})`; // value or undefined
+                            return `(${value})`;
                         });
-                        code = code.replace(/\$\d*(?!(sum|avg|min|max))/g, ($x) => {
-                            if ($x == "$") {
-                                return `(${vars.$})`;
-                            }
+                        console.debug(`09: code: ${code}`);
+                        code = code.replace(/\$\d+/g, ($x) => {
                             let index = Number($x.slice(1));
-                            return `(${vals[index]})`; // value or undefined
+                            let value = vals[index];
+                            if (value === undefined) {
+                                throw `invalid variable \`${name}\` in \`${line}\``;
+                            }
+                            return `(${value})`;
                         });
-                        /// <👆🏿-use>: replace `👆 [color]` with values
-                        code = code.replace(/👆[🏻🏼🏼🏽🏾🏿]?/gu, ($x) => {
-                            return `(${vars.$})`;
-                        });
-                        /// auto-prepend `$`, if `(line-start) (no-dollar) (no-left-parenthesis) (no-words) (no-👆)`
+                        console.debug(`10: code: ${code}`);
+                        
+                        /// auto-prepend `$`, if `(line-start) (no-dollar) (no-words) (no-left-parenthesis)`
                         let prevRes = result[result.length - 1]; // if prev line has res, then prepend prev value - vars.$
-                        if ((prevRes || prevRes === 0 || prevRes === false) && prevRes != "ERROR" && code.length && code.match(/^([^~!\(\w\$👆]|!=)+/u)) {
+                        // if ((prevRes || prevRes === 0 || prevRes === false) && code.length && code.match(/^([^!\(\w\$👆]|!=)/u))
+                        if ((prevRes || prevRes === 0 || prevRes === false) && code.length && code.match(BI_TER_OPERATORS_START)) {
+                            if (prevRes == "ERROR") {
+                                throw `invalid result of prev line \`${prevRes}\` in \`${line}\``
+                            }
                             code = `(${vars.$}) ${code}`;
                         }
+                        console.debug(`11: code: ${code}`);
                         
                         /// output percentage
                         resToPercentage = code.match(/%%\s*$/);
                         if (resToPercentage) {
                             code = code.slice(0, resToPercentage.index).trim();
                         }
+                        console.debug(`12: code: ${code}`);
                         /// input percentage
                         code = code.replace(/(\d+(\.\d+)?)\s*%(?!\s*[\w\(])/g, (pct) => {
                             return `(${pct.replace(/\s*%/, "")} / 100)`;
                         });
+                        console.debug(`13: code: ${code}`);
                         
                         /// convert base of number system
                         let convert = code.match(/#\d+\s*$/);
                         if (convert) {
                             resToBase = Number(convert[0].slice(1));
+                            if (resToBase < 2 || resToBase > 36) {
+                                throw `invalid base \`${resToBase}\` in \`${line}\``
+                            }
                             code = code.slice(0, convert.index).trim();
                         }
+                        console.debug(`14: code: ${code}`);
                     }
                     
                     /// eval
@@ -701,10 +761,12 @@
                     // else: needs prepend `return` to `code` - `code` is math exp
                     let js = jsCode ? code : "return " + code; // `return` value
                     if (funcName) {
+                        // return function as result
                         js = `return function ${funcName}${funcArgs} { ${js} }`; // `return` func
                     }
-                    console.log(`eval: ${js}`.replace(/%/g, "%%"));
-                    let res = new Function("funcs", "vars", "vals", `"use strict"; ${js}`)(funcs, vars, vals);
+                    console.debug(`eval: ${js}`.replace(/%/g, "%%"));
+                    // pass args funcs, vars and vals
+                    let res = (new Function(`"use strict"; ${js}`))();
                     
                     if (funcName) {
                         funcs[funcName] = res;
@@ -718,18 +780,19 @@
                                 funcs[funcName] = value;
                                 varName = undefined;
                                 value = undefined;
+                                throw "WARNING: return func to var name is deprecated"
                             }
-                            // !!!: DEPRECATED
+                            // !!!: DEPRECATED - js block returns a function
                             else if (value.name) {
                                 funcName = value.name;
                                 funcArgs = "(...)";
                                 funcs[funcName] = value;
                                 value = undefined;
-                                throw "WARNING: defining func via func name is deprecated"
+                                throw "WARNING: return func to func name is deprecated"
                             }
                         }
                     }
-                }
+                } // end of `if (code)`
                 else {
                     value = undefined;
                 }
@@ -752,7 +815,8 @@
                     }
                     else if (resToBase && resToBase != 10) {
                         let prefix = (resToBase == 2) ? "0b" : (resToBase == 8) ? "0o" : (resToBase == 16) ? "0x" : "";
-                        display = prefix + Math.abs(value).toString(resToBase).toUpperCase();
+                        let suffix = !prefix && resToBase != 10 ? (" #" + resToBase) : "";
+                        display = prefix + Math.abs(value).toString(resToBase).toUpperCase() + suffix;
                         if (value < 0) {
                             display = "-" + display;
                         }
@@ -777,7 +841,7 @@
                 }
                 else {
                     if (resToPercentage || resToBase) {
-                        throw `invalid conversion in \`${line}\``;
+                        throw `invalid conversion \`${resToPercentage || resToBase}\` in \`${line}\``;
                     }
                     
                     if (type == "boolean") {
@@ -785,14 +849,15 @@
                     }
                     else {
                         if (varName) {
-                            throw `invalid variable in \`${line}\``;
+                            throw `invalid variable \`${varName}\` in \`${line}\``;
                         }
                         else if (value !== undefined) {
-                            throw `invalid result in \`${line}\``;
+                            throw `invalid result \`${value}\` in \`${line}\``;
                         }
                     }
                 }
                 
+                /// log
                 let log = value ? `${code} = ${display || value}` : (`${code} ${comment || ""}`.trim() || "<empty-line>");
                 console.log("res: " + log.replace(/%/g, "%%"));
             }
@@ -823,7 +888,7 @@
                 text = funcName ? `${funcName}${funcArgs}: ${code} ${comment || ""}` : comment;
             }
             output.push(text?.trim().replace(/ ?\t/g, " \\\n"));
-        });}
+        });} // end of `for (let ln = 0; ln < lines.length; ln++)`
         
         /// output
         // let fixed = result.map((name, index) => name ? Number(name).toFixed(2) : name);
