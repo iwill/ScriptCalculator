@@ -844,6 +844,22 @@
                         }
                     }
                 }
+                else if (type == "bigint") {
+                    if (resToBase && resToBase != 10) {
+                        let prefix = (resToBase == 2) ? "0b" : (resToBase == 8) ? "0o" : (resToBase == 16) ? "0x" : "";
+                        let suffix = !prefix && resToBase != 10 ? (" #" + resToBase) : "";
+                        display = prefix + Math.abs(value).toString(resToBase).toUpperCase() + suffix;
+                        if (value < 0) {
+                            display = "-" + display;
+                        }
+                    }
+                    else {
+                        display = `BigInt: ${value}`
+                    }
+                }
+                else if (type == "string") {
+                    display = `String: ${value}`
+                }
                 else {
                     if (resToPercentage || resToBase) {
                         throw `invalid conversion \`${resToPercentage || resToBase}\` in \`${line}\``;
@@ -879,7 +895,8 @@
             /// result
             result.push(display || value);
             let text;
-            if (["number", "boolean"].includes(typeof value)) {
+            let type = typeof value;
+            if (["number", "bigint", "boolean", "string"].includes(type)) {
                 vals.push(value);
                 vars.$ = value;
                 if (varName) {
